@@ -9,6 +9,7 @@ import { StatusMap, HandoverRecord, PhotoAngle, PhotoStage } from '@/types'
 import { PhotoAngleMap, PhotoStageMap } from '@/types'
 
 type TabType = 'pending' | 'done' | 'qc'
+type QcFilterType = 'all' | 'photo' | 'handover' | 'followup'
 
 const requiredAngles: PhotoAngle[] = ['front', 'side', 'occlusal', 'local']
 
@@ -58,19 +59,20 @@ const getMissingItems = (patientId: string, photoRecords: any[], handoverRecords
 }
 
 const getTimeLimit = (patient: any) => {
-  if (!patient.submittedToDoctorAt) return null
+  if (!patient.submittedToDoctorAt) return { level: 'normal', minutes: 0 }
   const now = new Date()
   const [h, m] = patient.submittedToDoctorAt.split(':').map(Number)
   const submitted = new Date()
   submitted.setHours(h, m, 0, 0)
   const diffMin = Math.floor((now.getTime() - submitted.getTime()) / 60000)
-  if (diffMin >= 120) return 'overdue'
-  if (diffMin >= 90) return 'warning'
-  return null
+  if (diffMin >= 120) return { level: 'overdue', minutes: diffMin }
+  if (diffMin >= 90) return { level: 'warning', minutes: diffMin }
+  return { level: 'normal', minutes: diffMin }
 }
 
 const HandoverPage: React.FC = () => {
   const [tab, setTab] = useState<TabType>('pending')
+  const [qcFilter, setQcFilter] = useState<QcFilterType>('all')
   const store = usePatientStore()
   const { patients, photoRecords, handoverRecords } = store
 
@@ -91,27 +93,76 @@ const HandoverPage: React.FC = () => {
       .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
   }, [refreshKey, store])
 
-  const stats = useMemo(() => ({
-    pending: pendingPatients.length,
-    done: doneRecords.length,
-    unarchived: patients.filter(p => p.status === 'treating' || p.status === 'done')
-      .filter(p => !doneRecords.some(r => r.patientId === p.id)).length
-  }), [pendingPatients.length, doneRecords.length, patients])
+  const allTodayPatients = useMemo(() =>
+    patients.filter(p => p.status === 'treating' || p.status === 'done')
+  , [patients])
+
+  const stats = useMemo(() => {
+    const unarchivedCount = allTodayPatients
+      .filter(p => getMissingItems(p.id, photoRecords, handoverRecords).length > 0).length
+    return {
+      pending: pendingPatients.length,
+      done: doneRecords.length,
+      unarchived: unarchivedCount,
+      total: allTodayPatients.length
+    }
+  }, [pendingPatients.length, doneRecords.length, allTodayPatients, photoRecords, handoverRecords])
 
   const qcByRoom = useMemo(() => {
     void refreshKey
-    const rooms: Record<string, { patient: any; missing: ReturnType<typeof getMissingItems>; timeLimit: string | null }[]> = {}
-    patients.forEach(p => {
-      if (p.status !== 'treating' && p.status !== 'done') return
-      const handover = handoverRecords.find(r => r.patientId === p.id)
-      if (handover?.completedAt && handover.followUpDate) return
+    const rooms: Record<string, {
+      total: number
+      missingCount: number
+      items: { patient: any; missing: ReturnType<typeof getMissingItems>; timeLimit: ReturnType<typeof getTimeLimit> }[]
+      mostUrgent?: { patient: any; minutes: number }
+    }> = {}
+
+    allTodayPatients.forEach(p => {
+      if (!rooms[p.room]) {
+        rooms[p.room] = { total: 0, missingCount: 0, items: [] }
+      }
+      rooms[p.room].total++
       const missing = getMissingItems(p.id, photoRecords, handoverRecords)
+
       if (missing.length === 0) return
-      if (!rooms[p.room]) rooms[p.room] = []
-      rooms[p.room].push({ patient: p, missing, timeLimit: getTimeLimit(p) })
+
+      const filteredMissing = qcFilter === 'all'
+        ? missing
+        : missing.filter(m => m.type === qcFilter)
+
+      if (filteredMissing.length === 0) return
+
+      rooms[p.room].missingCount++
+      const timeLimit = getTimeLimit(p)
+      rooms[p.room].items.push({ patient: p, missing: filteredMissing, timeLimit })
     })
-    return rooms
-  }, [refreshKey, patients, photoRecords, handoverRecords])
+
+    Object.keys(rooms).forEach(room => {
+      rooms[room].items.sort((a, b) => {
+        const priority = { overdue: 0, warning: 1, normal: 2 }
+        const pa = priority[a.timeLimit.level as keyof typeof priority]
+        const pb = priority[b.timeLimit.level as keyof typeof priority]
+        if (pa !== pb) return pa - pb
+        return b.timeLimit.minutes - a.timeLimit.minutes
+      })
+      if (rooms[room].items.length > 0) {
+        rooms[room].mostUrgent = {
+          patient: rooms[room].items[0].patient,
+          minutes: rooms[room].items[0].timeLimit.minutes
+        }
+      }
+    })
+
+    const sorted: [string, typeof rooms[string]][] = Object.entries(rooms)
+      .filter(([, data]) => data.items.length > 0)
+      .sort(([, a], [, b]) => b.missingCount - a.missingCount)
+
+    return sorted
+  }, [refreshKey, allTodayPatients, photoRecords, handoverRecords, qcFilter])
+
+  const totalMissingCount = useMemo(() =>
+    qcByRoom.reduce((sum, [, data]) => sum + data.missingCount, 0)
+  , [qcByRoom])
 
   const handleGoDetail = useCallback((patientId: string) => {
     Taro.navigateTo({ url: `/pages/handover-detail/index?patientId=${patientId}` })
@@ -154,6 +205,13 @@ const HandoverPage: React.FC = () => {
     return () => {}
   }
 
+  const qcFilters: { key: QcFilterType; label: string; icon: string }[] = [
+    { key: 'all', label: '全部', icon: '📋' },
+    { key: 'photo', label: '缺照片', icon: '📷' },
+    { key: 'handover', label: '缺交接', icon: '📝' },
+    { key: 'followup', label: '缺复诊', icon: '📅' }
+  ]
+
   return (
     <View className={styles.page}>
       <View className={styles.header}>
@@ -179,19 +237,19 @@ const HandoverPage: React.FC = () => {
           className={classnames(styles.tabItem, tab === 'pending' && styles.active)}
           onClick={() => setTab('pending')}
         >
-          <Text>待交接 ({stats.pending})</Text>
+          <Text>待交接</Text>
         </View>
         <View
           className={classnames(styles.tabItem, tab === 'done' && styles.active)}
           onClick={() => setTab('done')}
         >
-          <Text>已完成 ({stats.done})</Text>
+          <Text>已完成</Text>
         </View>
         <View
           className={classnames(styles.tabItem, tab === 'qc' && styles.active)}
           onClick={() => setTab('qc')}
         >
-          <Text>质控看板{stats.unarchived > 0 ? ` (${stats.unarchived})` : ''}</Text>
+          <Text>质控看板</Text>
         </View>
       </View>
 
@@ -281,7 +339,7 @@ const HandoverPage: React.FC = () => {
                       </View>
                     </View>
 
-                    {record.followUpDate && (
+                    {record.followUpDate ? (
                       <View className={styles.summaryRow}>
                         <Text className={styles.summaryIcon}>📅</Text>
                         <View className={styles.summaryContent}>
@@ -291,11 +349,9 @@ const HandoverPage: React.FC = () => {
                           </Text>
                         </View>
                       </View>
-                    )}
-
-                    {!record.followUpDate && (
+                    ) : (
                       <View className={styles.summaryRow}>
-                        <Text className={styles.summaryIcon}>�</Text>
+                        <Text className={styles.summaryIcon}>📅</Text>
                         <View className={styles.summaryContent}>
                           <Text className={styles.summaryLabel}>复诊时间</Text>
                           <Text className={classnames(styles.summaryValue, styles.missingHighlight)}>
@@ -306,7 +362,7 @@ const HandoverPage: React.FC = () => {
                     )}
 
                     <View className={styles.summaryRow}>
-                      <Text className={styles.summaryIcon}>�📷</Text>
+                      <Text className={styles.summaryIcon}>📷</Text>
                       <View className={styles.summaryContent}>
                         <Text className={styles.summaryLabel}>照片完成度</Text>
                         <View className={styles.photoCompletion}>
@@ -351,90 +407,144 @@ const HandoverPage: React.FC = () => {
             })
           )
         ) : (
-          Object.keys(qcByRoom).length === 0 ? (
-            <View className={styles.emptyState}>
-              <Text className={styles.emptyIcon}>✅</Text>
-              <Text className={styles.emptyText}>所有患者归档完整</Text>
-            </View>
-          ) : (
-            Object.entries(qcByRoom).map(([room, items]) => (
-              <View key={room} className={styles.qcRoomSection}>
-                <View className={styles.qcRoomHeader}>
-                  <View className={styles.qcRoomLeft}>
-                    <Text className={styles.qcRoomName}>{room}</Text>
-                    <Text className={styles.qcRoomCount}>{items.length}位待补齐</Text>
-                  </View>
-                  {items.some(i => i.timeLimit === 'overdue') && (
-                    <View className={styles.qcOverdueTag}>
-                      <Text>🔴 已超时</Text>
-                    </View>
-                  )}
-                  {!items.some(i => i.timeLimit === 'overdue') && items.some(i => i.timeLimit === 'warning') && (
-                    <View className={styles.qcWarningTag}>
-                      <Text>🟡 即将超时</Text>
-                    </View>
-                  )}
-                </View>
-
-                {items.map(({ patient, missing, timeLimit }) => (
-                  <View key={patient.id} className={classnames(
-                    styles.qcPatientCard,
-                    timeLimit === 'overdue' && styles.qcOverdue,
-                    timeLimit === 'warning' && styles.qcWarning
-                  )}>
-                    <View className={styles.qcPatientHeader}>
-                      <View className={styles.qcPatientLeft} onClick={() => handleGoPatientDetail(patient.id)}>
-                        <View className={styles.qcAvatar}>
-                          <Text>{patient.name.charAt(0)}</Text>
-                        </View>
-                        <View>
-                          <Text className={styles.qcPatientName}>{patient.name}</Text>
-                          <Text className={styles.qcPatientMeta}>
-                            {patient.dentist} · {StatusMap[patient.status]}
-                            {patient.submittedToDoctorAt ? ` · 提交 ${patient.submittedToDoctorAt}` : ''}
-                          </Text>
-                        </View>
-                      </View>
-                      {timeLimit === 'overdue' && (
-                        <View className={styles.qcTimeTag}>
-                          <Text>⏰ 超时</Text>
-                        </View>
-                      )}
-                      {timeLimit === 'warning' && (
-                        <View className={styles.qcTimeTagWarn}>
-                          <Text>⏳ 即将超时</Text>
-                        </View>
-                      )}
-                    </View>
-
-                    <View className={styles.qcMissingList}>
-                      {missing.map((item, idx) => (
-                        <View key={idx} className={classnames(
-                          styles.qcMissingItem,
-                          item.type === 'photo' && styles.qcMissingPhoto,
-                          item.type === 'handover' && styles.qcMissingHandover,
-                          item.type === 'followup' && styles.qcMissingFollowup
-                        )}>
-                          <View className={styles.qcMissingLeft}>
-                            <Text className={styles.qcMissingIcon}>
-                              {item.type === 'photo' ? '📷' : item.type === 'handover' ? '📋' : '📅'}
-                            </Text>
-                            <Text className={styles.qcMissingLabel}>{item.label}</Text>
-                          </View>
-                          <View
-                            className={styles.qcFixBtn}
-                            onClick={getMissingAction(item, patient.id)}
-                          >
-                            <Text>去补齐 ›</Text>
-                          </View>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                ))}
+          <View>
+            <View className={styles.qcSummaryBar}>
+              <View className={styles.qcSummaryLeft}>
+                <Text className={styles.qcSummaryNum}>{totalMissingCount}</Text>
+                <Text className={styles.qcSummaryLabel}>位待补齐</Text>
               </View>
-            ))
-          )
+              <View className={styles.qcSummaryRight}>
+                <Text className={styles.qcSummarySub}>
+                  共 {stats.total} 位患者 · {qcByRoom.length} 个诊室
+                </Text>
+              </View>
+            </View>
+
+            <View className={styles.qcFilterBar}>
+              {qcFilters.map(f => (
+                <View
+                  key={f.key}
+                  className={classnames(styles.qcFilterItem, qcFilter === f.key && styles.qcFilterActive)}
+                  onClick={() => setQcFilter(f.key)}
+                >
+                  <Text className={styles.qcFilterIcon}>{f.icon}</Text>
+                  <Text className={styles.qcFilterLabel}>{f.label}</Text>
+                </View>
+              ))}
+            </View>
+
+            {qcByRoom.length === 0 ? (
+              <View className={styles.emptyState}>
+                <Text className={styles.emptyIcon}>✅</Text>
+                <Text className={styles.emptyText}>所有{qcFilter === 'all' ? '患者' : qcFilter === 'photo' ? '照片' : qcFilter === 'handover' ? '交接' : '复诊'}均已完成</Text>
+              </View>
+            ) : (
+              qcByRoom.map(([room, data]) => (
+                <View key={room} className={styles.qcRoomSection}>
+                  <View className={styles.qcRoomHeader}>
+                    <View className={styles.qcRoomLeft}>
+                      <Text className={styles.qcRoomName}>{room}</Text>
+                      <Text className={styles.qcRoomCount}>
+                        {data.missingCount}位待补齐 · {data.total - data.missingCount}位已完成
+                      </Text>
+                    </View>
+                    {data.items.some(i => i.timeLimit.level === 'overdue') && (
+                      <View className={styles.qcOverdueTag}>
+                        <Text>🔴 超时</Text>
+                      </View>
+                    )}
+                    {!data.items.some(i => i.timeLimit.level === 'overdue') && data.items.some(i => i.timeLimit.level === 'warning') && (
+                      <View className={styles.qcWarningTag}>
+                        <Text>🟡 预警</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  <View className={styles.qcRoomProgress}>
+                    <View className={styles.qcProgressBar}>
+                      <View
+                        className={styles.qcProgressFill}
+                        style={{ width: `${((data.total - data.missingCount) / data.total) * 100}%` }}
+                      />
+                    </View>
+                    <Text className={styles.qcProgressText}>
+                      {Math.round(((data.total - data.missingCount) / data.total) * 100)}%
+                    </Text>
+                  </View>
+
+                  {data.mostUrgent && data.mostUrgent.minutes >= 90 && (
+                    <View className={styles.qcUrgentRow}>
+                      <Text className={styles.qcUrgentLabel}>⚠️ 最紧急</Text>
+                      <Text className={styles.qcUrgentName}>{data.mostUrgent.patient.name}</Text>
+                      <Text className={styles.qcUrgentTime}>
+                        {data.mostUrgent.minutes >= 120
+                          ? `已超${Math.floor((data.mostUrgent.minutes - 120) / 60)}h${(data.mostUrgent.minutes - 120) % 60}分`
+                          : `${Math.floor((120 - data.mostUrgent.minutes) / 60)}h${(120 - data.mostUrgent.minutes) % 60}分后超时`
+                        }
+                      </Text>
+                    </View>
+                  )}
+
+                  {data.items.map(({ patient, missing, timeLimit }) => (
+                    <View key={patient.id} className={classnames(
+                      styles.qcPatientCard,
+                      timeLimit.level === 'overdue' && styles.qcOverdue,
+                      timeLimit.level === 'warning' && styles.qcWarning
+                    )}>
+                      <View className={styles.qcPatientHeader}>
+                        <View className={styles.qcPatientLeft} onClick={() => handleGoPatientDetail(patient.id)}>
+                          <View className={styles.qcAvatar}>
+                            <Text>{patient.name.charAt(0)}</Text>
+                          </View>
+                          <View>
+                            <Text className={styles.qcPatientName}>{patient.name}</Text>
+                            <Text className={styles.qcPatientMeta}>
+                              {patient.dentist} · {StatusMap[patient.status]}
+                              {patient.submittedToDoctorAt ? ` · ${patient.submittedToDoctorAt}提交` : ''}
+                            </Text>
+                          </View>
+                        </View>
+                        {timeLimit.level === 'overdue' && (
+                          <View className={styles.qcTimeTag}>
+                            <Text>⏰ 已超时</Text>
+                          </View>
+                        )}
+                        {timeLimit.level === 'warning' && (
+                          <View className={styles.qcTimeTagWarn}>
+                            <Text>⏳ 即将超时</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <View className={styles.qcMissingList}>
+                        {missing.map((item, idx) => (
+                          <View key={idx} className={classnames(
+                            styles.qcMissingItem,
+                            item.type === 'photo' && styles.qcMissingPhoto,
+                            item.type === 'handover' && styles.qcMissingHandover,
+                            item.type === 'followup' && styles.qcMissingFollowup
+                          )}>
+                            <View className={styles.qcMissingLeft}>
+                              <Text className={styles.qcMissingIcon}>
+                                {item.type === 'photo' ? '📷' : item.type === 'handover' ? '📋' : '📅'}
+                              </Text>
+                              <Text className={styles.qcMissingLabel}>{item.label}</Text>
+                            </View>
+                            <View
+                              className={styles.qcFixBtn}
+                              onClick={getMissingAction(item, patient.id)}
+                            >
+                              <Text>去补齐 ›</Text>
+                            </View>
+                          </View>
+                        ))}
+                      </View>
+                    </View>
+                  ))}
+                </View>
+              ))
+            )}
+          </View>
         )}
       </ScrollView>
     </View>

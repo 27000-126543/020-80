@@ -51,6 +51,15 @@
     font-size: $font-size-sm;
     font-weight: $font-weight-medium;
   }
+
+  .followUpBadge {
+    padding: 8rpx 20rpx;
+    border-radius: $radius-round;
+    background: $color-primary-bg;
+    color: $color-primary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
 }
 
 .section {
@@ -185,6 +194,29 @@
   }
 }
 
+.followUpEditNotice {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: flex-start;
+
+  .noticeIcon {
+    font-size: 28rpx;
+    margin-right: $spacing-sm;
+    flex-shrink: 0;
+  }
+
+  .noticeText {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-primary;
+    line-height: 1.6;
+    font-weight: $font-weight-medium;
+  }
+}
+
 .supplyList {
   display: flex;
   flex-direction: column;
@@ -208,6 +240,14 @@
 
     .supplyName {
       color: $color-success;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+
+    &:active {
+      opacity: 0.6;
     }
   }
 
@@ -266,6 +306,14 @@
 
     .confirmTitle {
       color: $color-success;
+    }
+  }
+
+  &.disabled {
+    opacity: 0.6;
+
+    &:active {
+      opacity: 0.6;
     }
   }
 
@@ -368,5 +416,9 @@
 
   &.done {
     background: $color-success;
+  }
+
+  &.followUpSave {
+    background: linear-gradient(135deg, $color-info 0%, #3dd6e0 100%);
   }
 }

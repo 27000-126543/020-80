@@ -3,7 +3,7 @@
 .page {
   min-height: 100vh;
   background: $color-bg-page;
-  padding-bottom: 40rpx;
+  padding-bottom: 180rpx;
 }
 
 .patientBar {
@@ -266,5 +266,172 @@
   &.pendingValue {
     color: $color-warning;
     font-weight: $font-weight-medium;
+  }
+}
+
+.statusBadge {
+  &.submitted {
+    background: $color-primary-bg;
+    color: $color-primary;
+  }
+}
+
+.submittedBar {
+  margin: $spacing-md $page-padding 0;
+  padding: $spacing-md $spacing-lg;
+  background: $color-primary-bg;
+  border-radius: $radius-lg;
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+
+  .submittedIcon {
+    font-size: 36rpx;
+    flex-shrink: 0;
+  }
+
+  .submittedInfo {
+    flex: 1;
+  }
+
+  .submittedTitle {
+    display: block;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+    margin-bottom: 4rpx;
+  }
+
+  .submittedMeta {
+    display: block;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+  }
+}
+
+.missingSection {
+  margin: $spacing-md $page-padding 0;
+  padding: $spacing-md $spacing-lg;
+  background: $color-warning-bg;
+  border-radius: $radius-lg;
+
+  .missingHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+  }
+
+  .missingTitle {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-warning;
+  }
+
+  .missingCount {
+    font-size: $font-size-sm;
+    color: $color-warning;
+    font-weight: $font-weight-medium;
+  }
+
+  .missingList {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-xs;
+  }
+
+  .missingItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-sm $spacing-md;
+    background: $color-bg-card;
+    border-radius: $radius-md;
+    border-left: 4rpx solid $color-warning;
+    transition: all $transition-fast;
+
+    &:active {
+      opacity: 0.9;
+    }
+
+    &.missPhoto {
+      border-left-color: $color-info;
+    }
+
+    &.missHandover {
+      border-left-color: $color-warning;
+    }
+
+    &.missFollowup {
+      border-left-color: $color-primary;
+    }
+  }
+
+  .missingLeft {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .missingIcon {
+    font-size: 28rpx;
+    flex-shrink: 0;
+  }
+
+  .missingLabel {
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    line-height: 1.4;
+  }
+
+  .missingAction {
+    font-size: $font-size-sm;
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+    flex-shrink: 0;
+  }
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.submitBtn {
+  width: 100%;
+  height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  font-size: 36rpx;
+  font-weight: $font-weight-semibold;
+  color: $color-text-white;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.readyBtn {
+    background: linear-gradient(135deg, $color-success 0%, #33d85a 100%);
+  }
+
+  &.submittedBtn {
+    background: $color-primary;
+  }
+
+  &.disabledBtn {
+    background: $color-text-disabled;
+    color: $color-text-white;
   }
 }

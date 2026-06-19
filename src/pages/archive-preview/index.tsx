@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { View, Text, ScrollView, Image } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
@@ -9,16 +9,30 @@ import { PhotoAngleMap, PhotoStageMap } from '@/types'
 
 const requiredAngles: PhotoAngle[] = ['front', 'side', 'occlusal', 'local']
 
+type MissingType = 'photo' | 'handover' | 'followup'
+
 const ArchivePreviewPage: React.FC = () => {
   const router = useRouter()
   const patientId = router.params.patientId as string
-  const { getPatientById, getPhotoRecordByPatientId, getHandoverByPatientId } = usePatientStore()
+  const {
+    getPatientById,
+    getPhotoRecordByPatientId,
+    getHandoverByPatientId,
+    submitArchive
+  } = usePatientStore()
+
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useDidShow(() => {
+    setRefreshKey(k => k + 1)
+  })
 
   const patient = getPatientById(patientId)
   const photoRecord = getPhotoRecordByPatientId(patientId)
   const handoverRecord = getHandoverByPatientId(patientId)
 
   const photoCompletion = useMemo(() => {
+    void refreshKey
     if (!photoRecord) return { completed: 0, total: 12 }
     let completed = 0
     ;(['pre', 'during', 'post'] as PhotoStage[]).forEach(stage => {
@@ -28,7 +42,40 @@ const ArchivePreviewPage: React.FC = () => {
       })
     })
     return { completed, total: 12 }
-  }, [photoRecord])
+  }, [photoRecord, refreshKey])
+
+  const missingItems = useMemo((): { type: MissingType; label: string; action: () => void }[] => {
+    void refreshKey
+    const items: { type: MissingType; label: string; action: () => void }[] = []
+
+    if (photoCompletion.completed < photoCompletion.total) {
+      const missing = photoCompletion.total - photoCompletion.completed
+      items.push({
+        type: 'photo',
+        label: `照片缺 ${missing} 个角度`,
+        action: () => Taro.navigateTo({ url: `/pages/photo-capture/index?patientId=${patientId}` })
+      })
+    }
+
+    if (!handoverRecord?.completedAt) {
+      items.push({
+        type: 'handover',
+        label: '交接确认未完成',
+        action: () => Taro.navigateTo({ url: `/pages/handover-detail/index?patientId=${patientId}` })
+      })
+    } else if (!handoverRecord.followUpDate) {
+      items.push({
+        type: 'followup',
+        label: '复诊安排待补齐',
+        action: () => Taro.navigateTo({ url: `/pages/handover-detail/index?patientId=${patientId}` })
+      })
+    }
+
+    return items
+  }, [photoCompletion, handoverRecord, patientId, refreshKey])
+
+  const isComplete = missingItems.length === 0
+  const isSubmitted = !!handoverRecord?.submittedAt
 
   const getStagePhotos = (stage: PhotoStage) => {
     if (!photoRecord) return []
@@ -49,6 +96,29 @@ const ArchivePreviewPage: React.FC = () => {
     Taro.previewImage({ urls: allUrls, current: photo.url })
   }
 
+  const handleSubmit = () => {
+    if (!isComplete) return
+    Taro.showModal({
+      title: '确认提交归档',
+      content: '归档提交后将进入病历系统，确认提交吗？',
+      confirmText: '确认提交',
+      confirmColor: '#00B4A0',
+      success: (res) => {
+        if (res.confirm) {
+          submitArchive(patientId)
+          Taro.showToast({
+            title: '已提交归档',
+            icon: 'success',
+            duration: 1500
+          })
+          setTimeout(() => {
+            Taro.navigateBack()
+          }, 1500)
+        }
+      }
+    })
+  }
+
   if (!patient) {
     return (
       <View className={styles.page}>
@@ -56,10 +126,6 @@ const ArchivePreviewPage: React.FC = () => {
       </View>
     )
   }
-
-  const isComplete = photoCompletion.completed === photoCompletion.total
-    && handoverRecord?.completedAt
-    && handoverRecord?.followUpDate
 
   return (
     <View className={styles.page}>
@@ -73,13 +139,15 @@ const ArchivePreviewPage: React.FC = () => {
         </View>
         <View className={classnames(
           styles.statusBadge,
-          isComplete ? styles.complete : styles.incomplete
+          isSubmitted ? styles.submitted : isComplete ? styles.complete : styles.incomplete
         )}>
-          <Text>{isComplete ? '✓ 可提交' : '⚠️ 未完整'}</Text>
+          <Text>
+            {isSubmitted ? '✓ 已提交' : isComplete ? '✓ 可提交' : '⚠️ 未完整'}
+          </Text>
         </View>
       </View>
 
-      <ScrollView scrollY style={{ height: 'calc(100vh - 160rpx)' }}>
+      <ScrollView scrollY style={{ height: 'calc(100vh - 360rpx)' }}>
         <View className={styles.completionBar}>
           <View className={styles.completionHeader}>
             <Text className={styles.completionLabel}>归档完成度</Text>
@@ -95,10 +163,53 @@ const ArchivePreviewPage: React.FC = () => {
           <View className={styles.completionTrack}>
             <View
               className={classnames(styles.completionFill, isComplete && styles.allDoneFill)}
-              style={{ width: `${(photoCompletion.completed / photoCompletion.total) * 100}%` }}
+              style={{ width: `${Math.min(100, (photoCompletion.completed / photoCompletion.total) * 100)}%` }}
             />
           </View>
         </View>
+
+        {isSubmitted && (
+          <View className={styles.submittedBar}>
+            <Text className={styles.submittedIcon}>✅</Text>
+            <View className={styles.submittedInfo}>
+              <Text className={styles.submittedTitle}>归档已提交</Text>
+              <Text className={styles.submittedMeta}>
+                提交人：{handoverRecord.submittedBy} · {handoverRecord.submittedAt}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {!isComplete && missingItems.length > 0 && (
+          <View className={styles.missingSection}>
+            <View className={styles.missingHeader}>
+              <Text className={styles.missingTitle}>⚠️ 待补齐项</Text>
+              <Text className={styles.missingCount}>{missingItems.length}项</Text>
+            </View>
+            <View className={styles.missingList}>
+              {missingItems.map((item, idx) => (
+                <View
+                  key={idx}
+                  className={classnames(
+                    styles.missingItem,
+                    item.type === 'photo' && styles.missPhoto,
+                    item.type === 'handover' && styles.missHandover,
+                    item.type === 'followup' && styles.missFollowup
+                  )}
+                  onClick={item.action}
+                >
+                  <View className={styles.missingLeft}>
+                    <Text className={styles.missingIcon}>
+                      {item.type === 'photo' ? '📷' : item.type === 'handover' ? '📋' : '📅'}
+                    </Text>
+                    <Text className={styles.missingLabel}>{item.label}</Text>
+                  </View>
+                  <Text className={styles.missingAction}>去补齐 ›</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
 
         {(['pre', 'during', 'post'] as PhotoStage[]).map(stage => {
           const stagePhotos = getStagePhotos(stage)
@@ -208,6 +319,22 @@ const ArchivePreviewPage: React.FC = () => {
           </View>
         </View>
       </ScrollView>
+
+      <View className={styles.bottomBar}>
+        {isSubmitted ? (
+          <View className={classnames(styles.submitBtn, styles.submittedBtn)}>
+            <Text>✓ 归档已提交</Text>
+          </View>
+        ) : isComplete ? (
+          <View className={classnames(styles.submitBtn, styles.readyBtn)} onClick={handleSubmit}>
+            <Text>确认提交归档</Text>
+          </View>
+        ) : (
+          <View className={classnames(styles.submitBtn, styles.disabledBtn)}>
+            <Text>请先补齐 {missingItems.length} 项缺失材料</Text>
+          </View>
+        )}
+      </View>
     </View>
   )
 }

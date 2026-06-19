@@ -64,6 +64,8 @@ export interface HandoverRecord {
   notes: string
   completedAt: string
   nurse: string
+  submittedAt?: string
+  submittedBy?: string
 }
 
 export const PhotoAngleMap: Record<PhotoAngle, string> = {

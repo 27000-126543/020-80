@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { View, Text, Textarea, Picker } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
@@ -18,6 +18,12 @@ const HandoverDetailPage: React.FC = () => {
     completeHandover
   } = usePatientStore()
 
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useDidShow(() => {
+    setRefreshKey(k => k + 1)
+  })
+
   const patient = getPatientById(patientId)
   const existingRecord = getHandoverByPatientId(patientId)
 
@@ -29,7 +35,10 @@ const HandoverDetailPage: React.FC = () => {
   const [followUpTime, setFollowUpTime] = useState('09:00')
   const [notes, setNotes] = useState('')
 
-  const isCompleted = record?.completedAt ? true : false
+  const isHandoverCompleted = record?.completedAt ? true : false
+  const isFollowUpDone = record?.followUpDate ? true : false
+  const isReadOnly = isHandoverCompleted && isFollowUpDone
+  const isFollowUpEditMode = isHandoverCompleted && !isFollowUpDone
 
   useEffect(() => {
     if (existingRecord) {
@@ -50,10 +59,10 @@ const HandoverDetailPage: React.FC = () => {
       setRecord(newRecord)
       setSupplies(newRecord.supplies)
     }
-  }, [patientId, existingRecord, createHandover])
+  }, [patientId, existingRecord, createHandover, refreshKey])
 
   const toggleSupply = (supplyId: string) => {
-    if (isCompleted) return
+    if (isReadOnly) return
     setSupplies(prev =>
       prev.map(s =>
         s.id === supplyId ? { ...s, checked: !s.checked } : s
@@ -62,7 +71,15 @@ const HandoverDetailPage: React.FC = () => {
   }
 
   const toggleFollowUp = () => {
-    if (isCompleted) return
+    if (isReadOnly) return
+    if (isFollowUpEditMode) {
+      const newValue = !followUpAppointment
+      setFollowUpAppointment(newValue)
+      if (newValue && !followUpDate) {
+        setFollowUpDate(dayjs().add(7, 'day').format('YYYY-MM-DD'))
+      }
+      return
+    }
     const newValue = !followUpAppointment
     setFollowUpAppointment(newValue)
     if (newValue && !followUpDate) {
@@ -71,12 +88,12 @@ const HandoverDetailPage: React.FC = () => {
   }
 
   const handleDateChange = (e: any) => {
-    if (isCompleted) return
+    if (isReadOnly) return
     setFollowUpDate(e.detail.value)
   }
 
   const handleTimeChange = (e: any) => {
-    if (isCompleted) return
+    if (isReadOnly) return
     setFollowUpTime(e.detail.value)
   }
 
@@ -147,7 +164,6 @@ const HandoverDetailPage: React.FC = () => {
             icon: 'success',
             duration: 1500
           })
-          console.log('[HandoverDetail] complete handover', { patientId, checkedCount, fullFollowUpDate })
 
           setTimeout(() => {
             Taro.navigateBack()
@@ -155,6 +171,44 @@ const HandoverDetailPage: React.FC = () => {
         }
       }
     })
+  }
+
+  const handleSaveFollowUp = () => {
+    if (!record) return
+    if (!followUpAppointment) {
+      Taro.showToast({
+        title: '请勾选复诊预约',
+        icon: 'none',
+        duration: 1500
+      })
+      return
+    }
+    if (!followUpDate) {
+      Taro.showToast({
+        title: '请选择复诊时间',
+        icon: 'none',
+        duration: 1500
+      })
+      return
+    }
+    const fullFollowUpDate = `${followUpDate} ${followUpTime}`
+    const updatedRecord: HandoverRecord = {
+      ...record,
+      followUpAppointment: true,
+      followUpDate: fullFollowUpDate
+    }
+    updateHandover(updatedRecord)
+    setRecord(updatedRecord)
+
+    Taro.showToast({
+      title: '复诊已更新',
+      icon: 'success',
+      duration: 1500
+    })
+
+    setTimeout(() => {
+      Taro.navigateBack()
+    }, 1500)
   }
 
   const checkedSupplyCount = supplies.filter(s => s.checked).length
@@ -183,14 +237,28 @@ const HandoverDetailPage: React.FC = () => {
             {patient.room} · {patient.dentist} · {patient.appointmentTime}
           </Text>
         </View>
-        {isCompleted && (
+        {isReadOnly && (
           <View className={styles.completedBadge}>
             <Text>✓ 已完成</Text>
           </View>
         )}
+        {isFollowUpEditMode && (
+          <View className={styles.followUpBadge}>
+            <Text>📅 补复诊</Text>
+          </View>
+        )}
       </View>
 
-      {isCompleted && (
+      {isFollowUpEditMode && (
+        <View className={styles.followUpEditNotice}>
+          <Text className={styles.noticeIcon}>ℹ️</Text>
+          <View className={styles.noticeText}>
+            <Text>护理配合记录已归档，可补录复诊时间</Text>
+          </View>
+        </View>
+      )}
+
+      {isReadOnly && (
         <View className={styles.readOnlyNotice}>
           <Text className={styles.noticeIcon}>ℹ️</Text>
           <View className={styles.noticeText}>
@@ -216,7 +284,11 @@ const HandoverDetailPage: React.FC = () => {
           {supplies.map(supply => (
             <View
               key={supply.id}
-              className={classnames(styles.supplyItem, supply.checked && styles.checked)}
+              className={classnames(
+                styles.supplyItem,
+                supply.checked && styles.checked,
+                isReadOnly && styles.disabled
+              )}
               onClick={() => toggleSupply(supply.id)}
             >
               <View className={styles.checkbox}></View>
@@ -233,16 +305,22 @@ const HandoverDetailPage: React.FC = () => {
           </View>
           <View>
             <Text>交接确认项</Text>
-            <Text className={styles.sectionSubtitle}>已确认 {completedCount}/2</Text>
+            <Text className={styles.sectionSubtitle}>
+              {isFollowUpEditMode ? '已确认 2/2' : `已确认 ${completedCount}/2`}
+            </Text>
           </View>
         </View>
         <View className={styles.confirmItems}>
           <View
-            className={classnames(styles.confirmItem, postOpInstructions && styles.checked)}
-            onClick={() => !isCompleted && setPostOpInstructions(!postOpInstructions)}
+            className={classnames(
+              styles.confirmItem,
+              (postOpInstructions || isFollowUpEditMode) && styles.checked,
+              isReadOnly && styles.disabled
+            )}
+            onClick={() => !isReadOnly && !isFollowUpEditMode && setPostOpInstructions(!postOpInstructions)}
           >
             <View className={styles.checkIcon}>
-              <Text>{postOpInstructions ? '✓' : ''}</Text>
+              <Text>{postOpInstructions || isFollowUpEditMode ? '✓' : ''}</Text>
             </View>
             <View className={styles.confirmContent}>
               <Text className={styles.confirmTitle}>术后注意事项已告知</Text>
@@ -253,7 +331,11 @@ const HandoverDetailPage: React.FC = () => {
           </View>
 
           <View
-            className={classnames(styles.confirmItem, followUpAppointment && styles.checked)}
+            className={classnames(
+              styles.confirmItem,
+              followUpAppointment && styles.checked,
+              isReadOnly && styles.disabled
+            )}
             onClick={toggleFollowUp}
           >
             <View className={styles.checkIcon}>
@@ -280,11 +362,11 @@ const HandoverDetailPage: React.FC = () => {
                   end={getMaxDate()}
                   fields="day"
                   onChange={handleDateChange}
-                  disabled={isCompleted}
+                  disabled={isReadOnly}
                 >
                   <View className={styles.datePickerValue}>
                     <Text>{followUpDate || '请选择日期'}</Text>
-                    {!isCompleted && <Text className={styles.arrowIcon}>›</Text>}
+                    {!isReadOnly && <Text className={styles.arrowIcon}>›</Text>}
                   </View>
                 </Picker>
               </View>
@@ -294,11 +376,11 @@ const HandoverDetailPage: React.FC = () => {
                   mode="time"
                   value={followUpTime}
                   onChange={handleTimeChange}
-                  disabled={isCompleted}
+                  disabled={isReadOnly}
                 >
                   <View className={styles.datePickerValue}>
                     <Text>{followUpTime}</Text>
-                    {!isCompleted && <Text className={styles.arrowIcon}>›</Text>}
+                    {!isReadOnly && <Text className={styles.arrowIcon}>›</Text>}
                   </View>
                 </Picker>
               </View>
@@ -322,14 +404,14 @@ const HandoverDetailPage: React.FC = () => {
           placeholder="请输入备注信息，如：患者对麻药反应较大、术后出血较多需特殊观察等"
           placeholder-class="textarea-placeholder"
           value={notes}
-          onInput={(e) => !isCompleted && setNotes(e.detail.value)}
-          disabled={isCompleted}
+          onInput={(e) => !isReadOnly && !isFollowUpEditMode && setNotes(e.detail.value)}
+          disabled={isReadOnly || isFollowUpEditMode}
           maxlength={300}
           autoHeight
         />
       </View>
 
-      {isCompleted && (
+      {(isReadOnly || isFollowUpEditMode) && (
         <View className={styles.section}>
           <View className={styles.sectionTitle}>
             <View className={styles.sectionIcon}>
@@ -360,7 +442,7 @@ const HandoverDetailPage: React.FC = () => {
             <View className={styles.summaryItem}>
               <Text className={styles.summaryLabel}>术后注意事项</Text>
               <Text className={styles.summaryValue}>
-                {postOpInstructions ? '✓ 已详细告知' : '未确认'}
+                {postOpInstructions || isFollowUpEditMode ? '✓ 已详细告知' : '未确认'}
               </Text>
             </View>
             <View className={styles.summaryItem}>
@@ -386,9 +468,16 @@ const HandoverDetailPage: React.FC = () => {
           <Text>耗材 {checkedSupplyCount} 项 · 确认 {completedCount}/2</Text>
           <Text className={styles.summaryValue}>护士：当前护士</Text>
         </View>
-        {isCompleted ? (
+        {isReadOnly ? (
           <View className={classnames(styles.submitBtn, styles.done)}>
             <Text>✓ 护理记录已归档</Text>
+          </View>
+        ) : isFollowUpEditMode ? (
+          <View
+            className={classnames(styles.submitBtn, styles.followUpSave)}
+            onClick={handleSaveFollowUp}
+          >
+            <Text>保存复诊时间</Text>
           </View>
         ) : (
           <View className={styles.submitBtn} onClick={handleSubmit}>

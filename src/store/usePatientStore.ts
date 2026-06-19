@@ -120,6 +120,7 @@ interface PatientState {
 
   getPendingHandoverPatients: () => Patient[]
   getTodayDoneRecords: () => HandoverRecord[]
+  submitArchive: (patientId: string) => void
 }
 
 export const usePatientStore = create<PatientState>((set, get) => ({
@@ -305,5 +306,20 @@ export const usePatientStore = create<PatientState>((set, get) => ({
       const datePart = r.completedAt.split('T')[0] || r.completedAt.slice(0, 10)
       return datePart === today
     })
+  },
+
+  submitArchive: (patientId) => {
+    const now = new Date()
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    set(state => {
+      const handoverRecords = state.handoverRecords.map(r =>
+        r.patientId === patientId
+          ? { ...r, submittedAt: timeStr, submittedBy: '当前护士' }
+          : r
+      )
+      saveToStorage({ ...state, handoverRecords })
+      return { handoverRecords }
+    })
+    console.log('[PatientStore] submitArchive', { patientId, timeStr })
   }
 }))
