@@ -1,0 +1,96 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $page-padding $spacing-lg;
+  color: $color-text-white;
+
+  .dateRow {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: $spacing-md;
+  }
+
+  .date {
+    font-size: 48rpx;
+    font-weight: $font-weight-bold;
+    margin-right: $spacing-sm;
+  }
+
+  .weekday {
+    font-size: $font-size-md;
+    opacity: 0.9;
+  }
+
+  .stats {
+    display: flex;
+    gap: $spacing-lg;
+  }
+
+  .statItem {
+    display: flex;
+    flex-direction: column;
+
+    .num {
+      font-size: 36rpx;
+      font-weight: $font-weight-bold;
+    }
+
+    .label {
+      font-size: $font-size-sm;
+      opacity: 0.85;
+      margin-top: 4rpx;
+    }
+  }
+}
+
+.filterBar {
+  display: flex;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-page;
+  gap: $spacing-sm;
+}
+
+.filterItem {
+  flex: 1;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  background: $color-bg-card;
+  transition: all $transition-fast;
+
+  &.active {
+    color: $color-text-white;
+    background: $color-primary;
+  }
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.97);
+  }
+}
+
+.roomSection {
+  margin-top: $spacing-md;
+}
+
+.emptyState {
+  padding: 80rpx $page-padding;
+  text-align: center;
+
+  .emptyText {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+  }
+}

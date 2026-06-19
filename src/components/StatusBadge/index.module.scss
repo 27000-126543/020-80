@@ -1,0 +1,27 @@
+@use '@/styles/variables.scss' as *;
+
+.statusBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8rpx 20rpx;
+  border-radius: $radius-round;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+  white-space: nowrap;
+
+  &.pending {
+    color: $status-pending;
+    background: $status-pending-bg;
+  }
+
+  &.treating {
+    color: $status-treating;
+    background: $status-treating-bg;
+  }
+
+  &.done {
+    color: $status-done;
+    background: $status-done-bg;
+  }
+}

@@ -1,0 +1,288 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.patientBar {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+
+  .avatar {
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-white;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-sm;
+  }
+
+  .info {
+    flex: 1;
+  }
+
+  .name {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .meta {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+}
+
+.stageTabs {
+  display: flex;
+  background: $color-bg-card;
+  padding: $spacing-sm $page-padding;
+  gap: $spacing-sm;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.stageTab {
+  flex: 1;
+  height: 80rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  .stageName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-medium;
+  }
+
+  .stageCount {
+    font-size: $font-size-xs;
+    margin-top: 4rpx;
+  }
+
+  &.pre {
+    &.active {
+      background: $photo-pre-bg;
+      .stageName, .stageCount { color: $photo-pre; }
+    }
+    &:not(.active) {
+      .stageName { color: $color-text-secondary; }
+      .stageCount { color: $color-text-tertiary; }
+    }
+  }
+
+  &.during {
+    &.active {
+      background: $photo-during-bg;
+      .stageName, .stageCount { color: $photo-during; }
+    }
+    &:not(.active) {
+      .stageName { color: $color-text-secondary; }
+      .stageCount { color: $color-text-tertiary; }
+    }
+  }
+
+  &.post {
+    &.active {
+      background: $photo-post-bg;
+      .stageName, .stageCount { color: $photo-post; }
+    }
+    &:not(.active) {
+      .stageName { color: $color-text-secondary; }
+      .stageCount { color: $color-text-tertiary; }
+    }
+  }
+
+  &:active {
+    opacity: 0.85;
+  }
+}
+
+.angleGrid {
+  padding: $spacing-md $page-padding;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-md;
+}
+
+.angleCard {
+  padding: $spacing-lg $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all $transition-fast;
+
+  &:active {
+    transform: scale(0.97);
+  }
+
+  .angleIcon {
+    width: 120rpx;
+    height: 120rpx;
+    border-radius: $radius-round;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .angleName {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: 8rpx;
+  }
+
+  .angleCount {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-bottom: $spacing-md;
+  }
+
+  .captureBtn {
+    width: 100%;
+    height: 72rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-button;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    color: $color-text-white;
+  }
+
+  &.pre {
+    .angleIcon { background: $photo-pre-bg; }
+    .captureBtn { background: $photo-pre; }
+  }
+
+  &.during {
+    .angleIcon { background: $photo-during-bg; }
+    .captureBtn { background: $photo-during; }
+  }
+
+  &.post {
+    .angleIcon { background: $photo-post-bg; }
+    .captureBtn { background: $photo-post; }
+  }
+
+  &.done {
+    .angleIcon {
+      background: $color-success-bg;
+    }
+  }
+}
+
+.photoSection {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  .sectionTitle {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-sm;
+    padding: 0 $spacing-xs;
+  }
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12rpx;
+}
+
+.photoItem {
+  position: relative;
+  width: 100%;
+  padding-top: 75%;
+  border-radius: $radius-sm;
+  overflow: hidden;
+  background: $color-bg-hover;
+
+  image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .angleLabel {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 8rpx;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 20rpx;
+    text-align: center;
+  }
+
+  .deleteBtn {
+    position: absolute;
+    top: 8rpx;
+    right: 8rpx;
+    width: 36rpx;
+    height: 36rpx;
+    border-radius: $radius-round;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 20rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.emptyPhotos {
+  padding: 48rpx;
+  text-align: center;
+
+  .emptyText {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.bottomTip {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: flex-start;
+
+  .tipIcon {
+    font-size: 32rpx;
+    margin-right: $spacing-sm;
+    flex-shrink: 0;
+  }
+
+  .tipText {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-primary-dark;
+    line-height: 1.6;
+  }
+}

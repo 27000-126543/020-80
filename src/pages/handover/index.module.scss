@@ -1,0 +1,246 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.header {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $page-padding $spacing-lg;
+  color: $color-text-white;
+
+  .title {
+    font-size: 36rpx;
+    font-weight: $font-weight-semibold;
+    margin-bottom: $spacing-md;
+  }
+
+  .stats {
+    display: flex;
+    gap: $spacing-lg;
+  }
+
+  .statItem {
+    display: flex;
+    flex-direction: column;
+
+    .num {
+      font-size: 40rpx;
+      font-weight: $font-weight-bold;
+    }
+
+    .label {
+      font-size: $font-size-sm;
+      opacity: 0.85;
+      margin-top: 4rpx;
+    }
+  }
+}
+
+.tabBar {
+  display: flex;
+  background: $color-bg-card;
+  padding: 0 $page-padding;
+  border-bottom: 1rpx solid $color-divider;
+}
+
+.tabItem {
+  flex: 1;
+  height: 88rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+  color: $color-text-secondary;
+  position: relative;
+  transition: all $transition-fast;
+
+  &.active {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48rpx;
+      height: 6rpx;
+      border-radius: 3rpx;
+      background: $color-primary;
+    }
+  }
+}
+
+.pendingCard {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  border-left: 8rpx solid $color-warning;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+
+  .cardHeader {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+  }
+
+  .avatar {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, $color-warning 0%, #ff9f43 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-white;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-md;
+    flex-shrink: 0;
+  }
+
+  .info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: 6rpx;
+  }
+
+  .meta {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+
+  .statusTag {
+    padding: 6rpx 20rpx;
+    border-radius: $radius-round;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+    background: $status-pending-bg;
+    color: $status-pending;
+  }
+
+  .actionBtn {
+    margin-top: $spacing-md;
+    height: 80rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-button;
+    background: $color-primary;
+    color: $color-text-white;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+
+    &:active {
+      opacity: 0.9;
+    }
+  }
+}
+
+.doneCard {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  border-left: 8rpx solid $color-success;
+
+  .cardHeader {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+  }
+
+  .avatar {
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, $color-success 0%, #33d85a 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-white;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-md;
+    flex-shrink: 0;
+  }
+
+  .info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: 4rpx;
+  }
+
+  .meta {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+
+  .time {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    white-space: nowrap;
+  }
+
+  .detailRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-sm;
+    margin-top: $spacing-sm;
+    padding-top: $spacing-sm;
+    border-top: 1rpx solid $color-divider;
+  }
+
+  .detailTag {
+    font-size: $font-size-xs;
+    padding: 4rpx 12rpx;
+    border-radius: $radius-xs;
+    background: $color-bg-hover;
+    color: $color-text-secondary;
+  }
+
+  .checkIcon {
+    color: $color-success;
+    margin-left: $spacing-xs;
+  }
+}
+
+.emptyState {
+  padding: 120rpx $page-padding;
+  text-align: center;
+
+  .emptyIcon {
+    font-size: 80rpx;
+    margin-bottom: $spacing-md;
+  }
+
+  .emptyText {
+    font-size: $font-size-md;
+    color: $color-text-tertiary;
+  }
+}

@@ -1,0 +1,28 @@
+@use '@/styles/variables.scss' as *;
+
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  padding: $spacing-lg $page-padding $spacing-md;
+  background: $color-bg-page;
+
+  .icon {
+    width: 8rpx;
+    height: 32rpx;
+    border-radius: $radius-xs;
+    background: $color-primary;
+    margin-right: $spacing-sm;
+  }
+
+  .title {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    flex: 1;
+  }
+
+  .extra {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}

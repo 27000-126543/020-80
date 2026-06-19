@@ -1,0 +1,191 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 160rpx;
+}
+
+.patientHeader {
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  padding: $spacing-xl $page-padding;
+  color: $color-text-white;
+
+  .nameRow {
+    display: flex;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+  }
+
+  .avatar {
+    width: 100rpx;
+    height: 100rpx;
+    border-radius: $radius-round;
+    background: rgba(255, 255, 255, 0.2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 44rpx;
+    font-weight: $font-weight-bold;
+    margin-right: $spacing-md;
+  }
+
+  .name {
+    font-size: 40rpx;
+    font-weight: $font-weight-bold;
+  }
+
+  .infoGrid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-md;
+    margin-top: $spacing-md;
+  }
+
+  .infoItem {
+    min-width: 180rpx;
+
+    .label {
+      font-size: $font-size-sm;
+      opacity: 0.85;
+      margin-bottom: 4rpx;
+    }
+
+    .value {
+      font-size: $font-size-md;
+      font-weight: $font-weight-medium;
+    }
+  }
+}
+
+.section {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+    display: flex;
+    align-items: center;
+  }
+
+  .sectionIcon {
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: $radius-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28rpx;
+    margin-right: $spacing-sm;
+  }
+
+  .warningIcon {
+    background: $color-error-bg;
+  }
+
+  .normalIcon {
+    background: $color-primary-bg;
+  }
+
+  .alertIcon {
+    background: $color-warning-bg;
+  }
+}
+
+.content {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.8;
+}
+
+.tagList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-sm;
+}
+
+.tag {
+  padding: 10rpx 24rpx;
+  border-radius: $radius-sm;
+  font-size: $font-size-md;
+  font-weight: $font-weight-medium;
+}
+
+.dangerTag {
+  background: $color-error-bg;
+  color: $color-error;
+}
+
+.warningTag {
+  background: $color-warning-bg;
+  color: $color-warning;
+}
+
+.infoTag {
+  background: $color-info-bg;
+  color: $color-info;
+}
+
+.emptyText {
+  color: $color-text-tertiary;
+  font-size: $font-size-md;
+}
+
+.divider {
+  height: 1rpx;
+  background: $color-divider;
+  margin: $spacing-md 0;
+}
+
+.chiefComplaint {
+  font-size: $font-size-md;
+  color: $color-text-secondary;
+  line-height: 1.6;
+  padding: $spacing-md;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.submitBtn {
+  width: 100%;
+  height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  font-size: 36rpx;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+}
+
+.doneBtn {
+  background: $color-success;
+}

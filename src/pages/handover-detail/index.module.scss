@@ -1,0 +1,291 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 180rpx;
+}
+
+.patientBar {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+
+  .avatar {
+    width: 64rpx;
+    height: 64rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-white;
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-sm;
+  }
+
+  .info {
+    flex: 1;
+  }
+
+  .name {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .meta {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+
+  .completedBadge {
+    padding: 8rpx 20rpx;
+    border-radius: $radius-round;
+    background: $color-success-bg;
+    color: $color-success;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.section {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+    display: flex;
+    align-items: center;
+  }
+
+  .sectionIcon {
+    width: 48rpx;
+    height: 48rpx;
+    border-radius: $radius-sm;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28rpx;
+    margin-right: $spacing-sm;
+    background: $color-primary-bg;
+  }
+}
+
+.supplyList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.supplyItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  background: $color-bg-hover;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+  }
+
+  &.checked {
+    background: $color-success-bg;
+
+    .supplyName {
+      color: $color-success;
+    }
+  }
+
+  .checkbox {
+    width: 44rpx;
+    height: 44rpx;
+    border-radius: 50%;
+    border: 3rpx solid $color-border;
+    margin-right: $spacing-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: $color-bg-card;
+  }
+
+  &.checked .checkbox {
+    background: $color-success;
+    border-color: $color-success;
+
+    &::after {
+      content: '✓';
+      color: #fff;
+      font-size: 24rpx;
+      font-weight: bold;
+    }
+  }
+
+  .supplyName {
+    flex: 1;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+  }
+}
+
+.confirmItems {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-md;
+}
+
+.confirmItem {
+  display: flex;
+  align-items: center;
+  padding: $spacing-lg $spacing-md;
+  border-radius: $radius-md;
+  background: $color-bg-hover;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+  }
+
+  &.checked {
+    background: $color-success-bg;
+
+    .confirmTitle {
+      color: $color-success;
+    }
+  }
+
+  .checkIcon {
+    width: 56rpx;
+    height: 56rpx;
+    border-radius: 50%;
+    border: 3rpx solid $color-border;
+    margin-right: $spacing-md;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: $color-bg-card;
+    font-size: 28rpx;
+  }
+
+  &.checked .checkIcon {
+    background: $color-success;
+    border-color: $color-success;
+    color: #fff;
+  }
+
+  .confirmContent {
+    flex: 1;
+  }
+
+  .confirmTitle {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: 4rpx;
+  }
+
+  .confirmDesc {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.notesInput {
+  width: 100%;
+  min-height: 160rpx;
+  padding: $spacing-md;
+  border-radius: $radius-md;
+  background: $color-bg-hover;
+  font-size: $font-size-md;
+  color: $color-text-primary;
+  line-height: 1.6;
+  box-sizing: border-box;
+  border: none;
+  outline: none;
+}
+
+.bottomBar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $spacing-md $page-padding;
+  padding-bottom: calc(#{$spacing-md} + env(safe-area-inset-bottom));
+  background: $color-bg-card;
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+
+  .summary {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: $spacing-sm;
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+
+  .summaryValue {
+    color: $color-text-secondary;
+    font-weight: $font-weight-medium;
+  }
+}
+
+.submitBtn {
+  width: 100%;
+  height: 104rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: $radius-button;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  color: $color-text-white;
+  font-size: 36rpx;
+  font-weight: $font-weight-semibold;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.98);
+  }
+
+  &.disabled {
+    background: $color-text-disabled;
+  }
+
+  &.done {
+    background: $color-success;
+  }
+}
+
+.readOnlyNotice {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md;
+  background: $color-info-bg;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: flex-start;
+
+  .noticeIcon {
+    font-size: 28rpx;
+    margin-right: $spacing-sm;
+    flex-shrink: 0;
+  }
+
+  .noticeText {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-info;
+    line-height: 1.6;
+  }
+}
