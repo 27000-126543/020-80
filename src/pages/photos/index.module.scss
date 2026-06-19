@@ -199,3 +199,103 @@
     font-weight: $font-weight-semibold;
   }
 }
+
+.section {
+  margin-bottom: $spacing-md;
+}
+
+.sectionTitle {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $page-padding $spacing-sm;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+
+  .titleDotPending {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 50%;
+    background: $status-pending;
+    margin-right: $spacing-sm;
+  }
+
+  .titleDotDone {
+    width: 12rpx;
+    height: 12rpx;
+    border-radius: 50%;
+    background: $status-done;
+    margin-right: $spacing-sm;
+  }
+
+  .sectionExtra {
+    margin-left: auto;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-normal;
+    color: $color-text-tertiary;
+  }
+}
+
+.pendingCard {
+  display: flex;
+  align-items: center;
+  margin: 0 $page-padding $spacing-sm;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  border-left: 8rpx solid $status-pending;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
+
+  .pendingAvatar {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, $status-pending 0%, #ff9f43 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-white;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-md;
+    flex-shrink: 0;
+  }
+
+  .pendingInfo {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pendingName {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: 4rpx;
+  }
+
+  .pendingMeta {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+
+  .startBtn {
+    padding: 0 $spacing-md;
+    height: 64rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: $radius-button;
+    background: $status-pending;
+    color: $color-text-white;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+}

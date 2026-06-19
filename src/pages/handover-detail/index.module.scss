@@ -69,6 +69,14 @@
     align-items: center;
   }
 
+  .sectionSubtitle {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-normal;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+
   .sectionIcon {
     width: 48rpx;
     height: 48rpx;
@@ -79,6 +87,101 @@
     font-size: 28rpx;
     margin-right: $spacing-sm;
     background: $color-primary-bg;
+    flex-shrink: 0;
+  }
+}
+
+.datePickerRow {
+  display: flex;
+  gap: $spacing-md;
+  margin-top: $spacing-md;
+}
+
+.datePickerItem {
+  flex: 1;
+
+  .datePickerLabel {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+    margin-bottom: $spacing-xs;
+    padding-left: 4rpx;
+  }
+
+  .datePickerValue {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-sm $spacing-md;
+    background: $color-bg-hover;
+    border-radius: $radius-md;
+    font-size: $font-size-md;
+    color: $color-text-primary;
+    font-weight: $font-weight-medium;
+    min-height: 72rpx;
+  }
+
+  .arrowIcon {
+    font-size: 36rpx;
+    color: $color-text-tertiary;
+    line-height: 1;
+  }
+}
+
+.summaryList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.summaryItem {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-md;
+  padding: $spacing-sm 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.04);
+    padding-bottom: $spacing-md;
+  }
+
+  .summaryLabel {
+    width: 180rpx;
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    flex-shrink: 0;
+  }
+
+  .summaryValue {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    line-height: 1.6;
+    word-break: break-all;
+  }
+}
+
+.readOnlyNotice {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md;
+  background: $color-info-bg;
+  border-radius: $radius-md;
+  display: flex;
+  align-items: flex-start;
+
+  .noticeIcon {
+    font-size: 28rpx;
+    margin-right: $spacing-sm;
+    flex-shrink: 0;
+  }
+
+  .noticeText {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-info;
+    line-height: 1.6;
   }
 }
 
@@ -265,27 +368,5 @@
 
   &.done {
     background: $color-success;
-  }
-}
-
-.readOnlyNotice {
-  margin: $spacing-md $page-padding;
-  padding: $spacing-md;
-  background: $color-info-bg;
-  border-radius: $radius-md;
-  display: flex;
-  align-items: flex-start;
-
-  .noticeIcon {
-    font-size: 28rpx;
-    margin-right: $spacing-sm;
-    flex-shrink: 0;
-  }
-
-  .noticeText {
-    flex: 1;
-    font-size: $font-size-sm;
-    color: $color-info;
-    line-height: 1.6;
   }
 }

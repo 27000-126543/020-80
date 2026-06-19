@@ -189,3 +189,159 @@
 .doneBtn {
   background: $color-success;
 }
+
+.progressBar {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  .progressLabel {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+  }
+
+  .progressCount {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-primary;
+  }
+
+  .progressTrack {
+    width: 100%;
+    height: 12rpx;
+    background: $color-bg-hover;
+    border-radius: 6rpx;
+    overflow: hidden;
+  }
+
+  .progressFill {
+    height: 100%;
+    background: linear-gradient(90deg, $color-primary 0%, $color-primary-light 100%);
+    border-radius: 6rpx;
+    transition: width 0.3s ease;
+  }
+}
+
+.section {
+  transition: all 0.25s ease;
+  &:active {
+    transform: scale(0.99);
+    opacity: 0.96;
+  }
+
+  &.sectionChecked {
+    background: $color-success-bg;
+    border: 2rpx solid rgba(0, 180, 42, 0.25);
+    box-shadow: 0 4rpx 16rpx rgba(0, 180, 42, 0.08);
+  }
+
+  .sectionTitle {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: 0;
+    display: flex;
+    align-items: center;
+    flex: 1;
+  }
+
+  .sectionSubtitle {
+    display: block;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-normal;
+    color: $color-text-tertiary;
+    margin-top: 4rpx;
+  }
+
+  .sectionTitleNoClick {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    margin-bottom: $spacing-md;
+    display: flex;
+    align-items: center;
+
+    .sectionSubtitle {
+      display: block;
+      font-size: $font-size-sm;
+      font-weight: $font-weight-normal;
+      color: $color-text-tertiary;
+      margin-top: 4rpx;
+    }
+  }
+}
+
+.checkRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.checkCircle {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  border: 3rpx solid $color-border;
+  background: $color-bg-card;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: transparent;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+
+  &.checked {
+    background: $color-success;
+    border-color: $color-success;
+    color: #fff;
+  }
+}
+
+.checkContent {
+  padding-left: 64rpx;
+}
+
+.nameBox {
+  padding: $spacing-md;
+  background: $color-primary-bg;
+  border-radius: $radius-md;
+  text-align: center;
+
+  .nameBoxText {
+    font-size: $font-size-xxl;
+    font-weight: $font-weight-bold;
+    color: $color-primary-dark;
+    display: block;
+    margin-bottom: 6rpx;
+  }
+
+  .nameBoxMeta {
+    font-size: $font-size-sm;
+    color: $color-text-secondary;
+  }
+}
+
+.alertBox {
+  margin-top: $spacing-sm;
+  padding: $spacing-md;
+  background: rgba(255, 125, 0, 0.06);
+  border-radius: $radius-md;
+}
+
+.submitBtn {
+  &.ready {
+    background: linear-gradient(135deg, $color-success 0%, #33d85a 100%);
+  }
+
+  &.photo {
+    background: linear-gradient(135deg, $color-info 0%, #4080ff 100%);
+  }
+}

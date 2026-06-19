@@ -162,11 +162,17 @@
   border-radius: $radius-lg;
   box-shadow: $shadow-card;
   border-left: 8rpx solid $color-success;
+  transition: all $transition-base;
+
+  &:active {
+    opacity: 0.9;
+    transform: scale(0.99);
+  }
 
   .cardHeader {
     display: flex;
     align-items: center;
-    margin-bottom: $spacing-sm;
+    margin-bottom: $spacing-md;
   }
 
   .avatar {
@@ -227,6 +233,65 @@
   .checkIcon {
     color: $color-success;
     margin-left: $spacing-xs;
+  }
+}
+
+.doneInfoGrid {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+
+  .infoItem {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-sm;
+  }
+
+  .infoLabel {
+    width: 220rpx;
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    flex-shrink: 0;
+    line-height: 1.6;
+  }
+
+  .infoValue {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-text-primary;
+    line-height: 1.6;
+    word-break: break-all;
+  }
+
+  .highlight {
+    color: $color-primary;
+    font-weight: $font-weight-semibold;
+  }
+
+  .notes {
+    color: $color-text-secondary;
+  }
+}
+
+.viewRecordHint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-md $spacing-lg;
+  background: $color-success-bg;
+  border-radius: $radius-md;
+  color: $color-success;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-medium;
+
+  .arrow {
+    font-size: 32rpx;
+    font-weight: bold;
+    line-height: 1;
   }
 }
 

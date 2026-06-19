@@ -18,6 +18,13 @@ export interface Patient {
   chiefComplaint: string
   dentist: string
   phone: string
+  submittedToDoctorAt?: string
+  checklist?: {
+    nameChecked: boolean
+    allergyChecked: boolean
+    diseasesChecked: boolean
+    anticoagulantChecked: boolean
+  }
 }
 
 export interface PhotoItem {
@@ -53,6 +60,7 @@ export interface HandoverRecord {
   supplies: SupplyItem[]
   postOpInstructions: boolean
   followUpAppointment: boolean
+  followUpDate?: string
   notes: string
   completedAt: string
   nurse: string

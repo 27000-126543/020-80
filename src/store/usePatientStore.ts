@@ -1,6 +1,74 @@
 import { create } from 'zustand'
+import Taro from '@tarojs/taro'
 import type { Patient, PhotoRecord, HandoverRecord, PhotoItem, PhotoStage, SupplyItem } from '@/types'
 import { mockPatients, mockPhotoRecords, mockHandoverRecords, mockSupplies } from '@/data/mockData'
+
+const STORAGE_KEY = 'dental_nurse_store_v1'
+const STORAGE_DATE_KEY = 'dental_nurse_store_date'
+
+const getTodayStr = () => new Date().toISOString().split('T')[0]
+
+const loadFromStorage = () => {
+  try {
+    const storedDate = Taro.getStorageSync(STORAGE_DATE_KEY)
+    const today = getTodayStr()
+
+    if (storedDate !== today) {
+      console.log('[PatientStore] date changed, reset to mock data', { storedDate, today })
+      return null
+    }
+
+    const stored = Taro.getStorageSync(STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      console.log('[PatientStore] loaded from storage', {
+        patients: parsed.patients?.length,
+        photos: parsed.photoRecords?.length,
+        handovers: parsed.handoverRecords?.length
+      })
+      return parsed
+    }
+  } catch (e) {
+    console.error('[PatientStore] loadFromStorage error', e)
+  }
+  return null
+}
+
+const saveToStorage = (state: Partial<PatientState>) => {
+  try {
+    const toSave = {
+      patients: state.patients,
+      photoRecords: state.photoRecords,
+      handoverRecords: state.handoverRecords
+    }
+    Taro.setStorageSync(STORAGE_KEY, JSON.stringify(toSave))
+    Taro.setStorageSync(STORAGE_DATE_KEY, getTodayStr())
+  } catch (e) {
+    console.error('[PatientStore] saveToStorage error', e)
+  }
+}
+
+const initData = () => {
+  const stored = loadFromStorage()
+  if (stored) {
+    return stored
+  }
+  return {
+    patients: mockPatients.map(p => ({
+      ...p,
+      checklist: p.checklist || {
+        nameChecked: false,
+        allergyChecked: false,
+        diseasesChecked: false,
+        anticoagulantChecked: false
+      }
+    })),
+    photoRecords: mockPhotoRecords.filter(r => r.date === getTodayStr()),
+    handoverRecords: mockHandoverRecords
+  }
+}
+
+const initial = initData()
 
 interface PatientState {
   patients: Patient[]
@@ -11,22 +79,27 @@ interface PatientState {
   getPatientsByRoom: () => Record<string, Patient[]>
   getPatientById: (id: string) => Patient | undefined
   updatePatientStatus: (id: string, status: Patient['status']) => void
+  updatePatientChecklist: (id: string, checklist: Patient['checklist']) => void
+  submitToDoctor: (id: string) => void
 
   getPhotoRecordByPatientId: (patientId: string) => PhotoRecord | undefined
   addPhoto: (patientId: string, stage: PhotoStage, photo: PhotoItem) => void
+  getTodayPhotoRecords: () => PhotoRecord[]
+  getTodayTreatingPatientsWithoutPhotos: () => Patient[]
 
   getHandoverByPatientId: (patientId: string) => HandoverRecord | undefined
   createHandover: (patientId: string) => HandoverRecord
   updateHandover: (record: HandoverRecord) => void
-  completeHandover: (patientId: string) => void
+  completeHandover: (patientId: string, record: HandoverRecord) => void
 
   getPendingHandoverPatients: () => Patient[]
+  getTodayDoneRecords: () => HandoverRecord[]
 }
 
 export const usePatientStore = create<PatientState>((set, get) => ({
-  patients: mockPatients,
-  photoRecords: mockPhotoRecords,
-  handoverRecords: mockHandoverRecords,
+  patients: initial.patients,
+  photoRecords: initial.photoRecords,
+  handoverRecords: initial.handoverRecords,
   supplyTemplates: mockSupplies,
 
   getPatientsByRoom: () => {
@@ -47,12 +120,42 @@ export const usePatientStore = create<PatientState>((set, get) => ({
   },
 
   updatePatientStatus: (id, status) => {
-    set(state => ({
-      patients: state.patients.map(p =>
+    set(state => {
+      const patients = state.patients.map(p =>
         p.id === id ? { ...p, status } : p
       )
-    }))
+      saveToStorage({ ...state, patients })
+      return { patients }
+    })
     console.log('[PatientStore] updatePatientStatus', { id, status })
+  },
+
+  updatePatientChecklist: (id, checklist) => {
+    set(state => {
+      const patients = state.patients.map(p =>
+        p.id === id ? { ...p, checklist } : p
+      )
+      saveToStorage({ ...state, patients })
+      return { patients }
+    })
+    console.log('[PatientStore] updatePatientChecklist', { id, checklist })
+  },
+
+  submitToDoctor: (id) => {
+    const now = new Date()
+    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    set(state => {
+      const patients = state.patients.map(p =>
+        p.id === id ? {
+          ...p,
+          status: 'treating' as const,
+          submittedToDoctorAt: timeStr
+        } : p
+      )
+      saveToStorage({ ...state, patients })
+      return { patients }
+    })
+    console.log('[PatientStore] submitToDoctor', { id, timeStr })
   },
 
   getPhotoRecordByPatientId: (patientId) => {
@@ -70,7 +173,7 @@ export const usePatientStore = create<PatientState>((set, get) => ({
           patientId,
           patientName: patient?.name || '',
           room: patient?.room || '',
-          date: new Date().toISOString().split('T')[0],
+          date: getTodayStr(),
           prePhotos: [],
           duringPhotos: [],
           postPhotos: []
@@ -79,9 +182,28 @@ export const usePatientStore = create<PatientState>((set, get) => ({
       }
       const key = `${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
       record[key] = [...record[key], photo]
-      return { photoRecords: records }
+      const photoRecords = records
+      saveToStorage({ ...state, photoRecords })
+      return { photoRecords }
     })
     console.log('[PatientStore] addPhoto', { patientId, stage, photoId: photo.id })
+  },
+
+  getTodayPhotoRecords: () => {
+    const today = getTodayStr()
+    return get().photoRecords.filter(r => r.date === today)
+  },
+
+  getTodayTreatingPatientsWithoutPhotos: () => {
+    const today = getTodayStr()
+    const { patients, photoRecords } = get()
+    const photoPatientIds = photoRecords
+      .filter(r => r.date === today)
+      .map(r => r.patientId)
+    return patients.filter(p =>
+      (p.status === 'treating' || p.status === 'pending') &&
+      !photoPatientIds.includes(p.id)
+    )
   },
 
   getHandoverByPatientId: (patientId) => {
@@ -100,42 +222,62 @@ export const usePatientStore = create<PatientState>((set, get) => ({
       supplies,
       postOpInstructions: false,
       followUpAppointment: false,
+      followUpDate: '',
       notes: '',
       completedAt: '',
       nurse: '当前护士'
     }
-    set(state => ({
-      handoverRecords: [...state.handoverRecords, newRecord]
-    }))
+    set(state => {
+      const handoverRecords = [...state.handoverRecords, newRecord]
+      saveToStorage({ ...state, handoverRecords })
+      return { handoverRecords }
+    })
     console.log('[PatientStore] createHandover', { patientId })
     return newRecord
   },
 
   updateHandover: (record) => {
-    set(state => ({
-      handoverRecords: state.handoverRecords.map(r =>
+    set(state => {
+      const handoverRecords = state.handoverRecords.map(r =>
         r.id === record.id ? record : r
       )
-    }))
+      saveToStorage({ ...state, handoverRecords })
+      return { handoverRecords }
+    })
   },
 
-  completeHandover: (patientId) => {
+  completeHandover: (patientId, record) => {
     const now = new Date()
-    const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-    set(state => ({
-      handoverRecords: state.handoverRecords.map(r =>
-        r.patientId === patientId ? { ...r, completedAt: timeStr } : r
-      ),
-      patients: state.patients.map(p =>
+    const iso = now.toISOString()
+    const timeStr = `${iso.slice(0, 10)}T${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
+    set(state => {
+      const handoverRecords = state.handoverRecords.map(r =>
+        r.patientId === patientId ? { ...record, completedAt: timeStr } : r
+      )
+      const patients = state.patients.map(p =>
         p.id === patientId ? { ...p, status: 'done' } : p
       )
-    }))
+      saveToStorage({ ...state, handoverRecords, patients })
+      return { handoverRecords, patients }
+    })
     console.log('[PatientStore] completeHandover', { patientId, timeStr })
   },
 
   getPendingHandoverPatients: () => {
     const { patients, handoverRecords } = get()
     const doneIds = handoverRecords.filter(r => r.completedAt).map(r => r.patientId)
-    return patients.filter(p => p.status === 'treating' || (p.status === 'done' && !doneIds.includes(p.id)))
+    return patients.filter(p =>
+      p.status === 'treating' ||
+      (p.status === 'done' && !doneIds.includes(p.id))
+    )
+  },
+
+  getTodayDoneRecords: () => {
+    const today = getTodayStr()
+    return get().handoverRecords.filter(r => {
+      if (!r.completedAt) return false
+      const datePart = r.completedAt.split('T')[0] || r.completedAt.slice(0, 10)
+      return datePart === today
+    })
   }
 }))

@@ -190,8 +190,9 @@ export const mockHandoverRecords: HandoverRecord[] = [
     ],
     postOpInstructions: true,
     followUpAppointment: true,
+    followUpDate: `${new Date().toISOString().split('T')[0].slice(0, 8)}${(parseInt(new Date().toISOString().split('T')[0].slice(8, 10)) + 7).toString().padStart(2, '0')} 09:30`,
     notes: '24小时内勿用患侧咀嚼',
-    completedAt: '10:30',
+    completedAt: `${new Date().toISOString().split('T')[0]}T10:30`,
     nurse: '张护士'
   }
 ]

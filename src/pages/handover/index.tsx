@@ -4,19 +4,30 @@ import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
-import { StatusMap } from '@/types'
+import { StatusMap, HandoverRecord } from '@/types'
 
 type TabType = 'pending' | 'done'
 
+const getSupplySummary = (record: HandoverRecord, max = 3) => {
+  const checked = record.supplies.filter(s => s.checked)
+  if (checked.length === 0) return ''
+  const names = checked.slice(0, max).map(s => s.name)
+  if (checked.length > max) {
+    names.push(`+${checked.length - max}`)
+  }
+  return names.join('、')
+}
+
 const HandoverPage: React.FC = () => {
   const [tab, setTab] = useState<TabType>('pending')
-  const { patients, handoverRecords, getPendingHandoverPatients } = usePatientStore()
+  const { patients, getPendingHandoverPatients, getTodayDoneRecords } = usePatientStore()
 
   const pendingPatients = useMemo(() => getPendingHandoverPatients(), [getPendingHandoverPatients])
 
   const doneRecords = useMemo(() => {
-    return handoverRecords.filter(r => r.completedAt).sort((a, b) => b.completedAt.localeCompare(a.completedAt))
-  }, [handoverRecords])
+    return getTodayDoneRecords()
+      .sort((a, b) => b.completedAt.localeCompare(a.completedAt))
+  }, [getTodayDoneRecords])
 
   const stats = useMemo(() => ({
     pending: pendingPatients.length,
@@ -27,6 +38,23 @@ const HandoverPage: React.FC = () => {
     Taro.navigateTo({
       url: `/pages/handover-detail/index?patientId=${patientId}`
     })
+  }
+
+  const formatCompletedTime = (iso: string) => {
+    if (!iso) return ''
+    const t = iso.split('T')
+    if (t.length === 2) {
+      return `${t[0].slice(5)} ${t[1].slice(0, 5)}`
+    }
+    if (iso.includes(' ')) {
+      const [d, time] = iso.split(' ')
+      return `${d.slice(5)} ${time.slice(0, 5)}`
+    }
+    if (iso.match(/^\d{2}:\d{2}$/)) {
+      const today = new Date().toISOString().slice(5, 10)
+      return `${today} ${iso}`
+    }
+    return iso.slice(0, 16)
   }
 
   return (
@@ -105,43 +133,70 @@ const HandoverPage: React.FC = () => {
               <Text className={styles.emptyText}>暂无已完成记录</Text>
             </View>
           ) : (
-            doneRecords.map(record => (
-              <View
-                key={record.id}
-                className={styles.doneCard}
-                onClick={() => handleGoDetail(record.patientId)}
-              >
-                <View className={styles.cardHeader}>
-                  <View className={styles.avatar}>
-                    <Text>{record.patientName.charAt(0)}</Text>
+            doneRecords.map(record => {
+              const supplyCount = record.supplies.filter(s => s.checked).length
+              const supplySummary = getSupplySummary(record)
+
+              return (
+                <View
+                  key={record.id}
+                  className={styles.doneCard}
+                  onClick={() => handleGoDetail(record.patientId)}
+                >
+                  <View className={styles.cardHeader}>
+                    <View className={styles.avatar}>
+                      <Text>{record.patientName.charAt(0)}</Text>
+                    </View>
+                    <View className={styles.info}>
+                      <Text className={styles.name}>{record.patientName}</Text>
+                      <Text className={styles.meta}>
+                        {record.room} · {record.dentist} · 护士 {record.nurse}
+                      </Text>
+                    </View>
+                    <Text className={styles.time}>{formatCompletedTime(record.completedAt)}</Text>
                   </View>
-                  <View className={styles.info}>
-                    <Text className={styles.name}>{record.patientName}</Text>
-                    <Text className={styles.meta}>
-                      {record.room} · {record.dentist} · {record.nurse}
-                    </Text>
+
+                  <View className={styles.doneInfoGrid}>
+                    <View className={styles.infoItem}>
+                      <Text className={styles.infoLabel}>📦 耗材</Text>
+                      <Text className={styles.infoValue}>
+                        {supplyCount > 0 ? `${supplyCount}项 · ${supplySummary}` : '无'}
+                      </Text>
+                    </View>
+
+                    {record.followUpDate && (
+                      <View className={styles.infoItem}>
+                        <Text className={styles.infoLabel}>📅 复诊时间</Text>
+                        <Text className={classnames(styles.infoValue, styles.highlight)}>
+                          {record.followUpDate}
+                        </Text>
+                      </View>
+                    )}
+
+                    {record.postOpInstructions && (
+                      <View className={styles.infoItem}>
+                        <Text className={styles.infoLabel}>💡 术后注意事项</Text>
+                        <Text className={styles.infoValue}>已告知 ✓</Text>
+                      </View>
+                    )}
+
+                    {record.notes && (
+                      <View className={styles.infoItem}>
+                        <Text className={styles.infoLabel}>📝 备注</Text>
+                        <Text className={classnames(styles.infoValue, styles.notes)}>
+                          {record.notes}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                  <Text className={styles.time}>{record.completedAt}</Text>
+
+                  <View className={styles.viewRecordHint}>
+                    <Text>查看完整护理配合记录</Text>
+                    <Text className={styles.arrow}>›</Text>
+                  </View>
                 </View>
-                <View className={styles.detailRow}>
-                  {record.supplies.filter(s => s.checked).length > 0 && (
-                    <Text className={styles.detailTag}>
-                      耗材 {record.supplies.filter(s => s.checked).length} 项
-                    </Text>
-                  )}
-                  {record.postOpInstructions && (
-                    <Text className={styles.detailTag}>
-                      术后注意事项 ✓
-                    </Text>
-                  )}
-                  {record.followUpAppointment && (
-                    <Text className={styles.detailTag}>
-                      复诊已预约 ✓
-                    </Text>
-                  )}
-                </View>
-              </View>
-            ))
+              )
+            })
           )
         )}
       </ScrollView>
