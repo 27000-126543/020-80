@@ -212,59 +212,52 @@
     color: $color-text-tertiary;
     white-space: nowrap;
   }
-
-  .detailRow {
-    display: flex;
-    flex-wrap: wrap;
-    gap: $spacing-sm;
-    margin-top: $spacing-sm;
-    padding-top: $spacing-sm;
-    border-top: 1rpx solid $color-divider;
-  }
-
-  .detailTag {
-    font-size: $font-size-xs;
-    padding: 4rpx 12rpx;
-    border-radius: $radius-xs;
-    background: $color-bg-hover;
-    color: $color-text-secondary;
-  }
-
-  .checkIcon {
-    color: $color-success;
-    margin-left: $spacing-xs;
-  }
 }
 
-.doneInfoGrid {
-  display: flex;
-  flex-direction: column;
-  gap: $spacing-sm;
+.summaryCard {
   background: $color-bg-hover;
   border-radius: $radius-md;
   padding: $spacing-md;
   margin-bottom: $spacing-md;
+}
 
-  .infoItem {
-    display: flex;
-    align-items: flex-start;
-    gap: $spacing-sm;
+.summaryRow {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-xs 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.04);
+    padding-bottom: $spacing-sm;
+    margin-bottom: $spacing-xs;
   }
 
-  .infoLabel {
-    width: 220rpx;
+  .summaryIcon {
+    font-size: 28rpx;
+    flex-shrink: 0;
+    width: 40rpx;
+    text-align: center;
+  }
+
+  .summaryContent {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .summaryLabel {
     font-size: $font-size-sm;
     color: $color-text-tertiary;
-    flex-shrink: 0;
-    line-height: 1.6;
   }
 
-  .infoValue {
-    flex: 1;
+  .summaryValue {
     font-size: $font-size-sm;
     color: $color-text-primary;
-    line-height: 1.6;
-    word-break: break-all;
+    line-height: 1.4;
+    text-align: right;
+    max-width: 400rpx;
   }
 
   .highlight {
@@ -274,6 +267,41 @@
 
   .notes {
     color: $color-text-secondary;
+  }
+}
+
+.photoCompletion {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.completionTrack {
+  width: 120rpx;
+  height: 12rpx;
+  background: $color-bg-page;
+  border-radius: 6rpx;
+  overflow: hidden;
+}
+
+.completionFill {
+  height: 100%;
+  background: $color-warning;
+  border-radius: 6rpx;
+  transition: width 0.3s ease;
+
+  &.allDone {
+    background: $color-success;
+  }
+}
+
+.completionText {
+  font-size: $font-size-xs;
+  color: $color-warning;
+  font-weight: $font-weight-semibold;
+
+  &.allDoneText {
+    color: $color-success;
   }
 }
 
@@ -293,6 +321,120 @@
     font-weight: bold;
     line-height: 1;
   }
+}
+
+.roomSection {
+  margin: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+
+.roomHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-lg $spacing-lg $spacing-sm;
+
+  .roomName {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .roomStats {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.subSectionTitle {
+  display: block;
+  font-size: $font-size-sm;
+  font-weight: $font-weight-semibold;
+  color: $color-text-secondary;
+  padding: $spacing-sm $spacing-lg;
+}
+
+.archivedSection,
+.unarchivedSection {
+  padding-bottom: $spacing-sm;
+}
+
+.roomCard {
+  margin: 0 $spacing-md $spacing-sm;
+  padding: $spacing-md;
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  transition: all $transition-fast;
+
+  &:active {
+    opacity: 0.9;
+  }
+
+  &.unarchivedCard {
+    border-left: 6rpx solid $color-warning;
+  }
+}
+
+.roomCardHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-xs;
+
+  .roomCardName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .roomCardMeta {
+    font-size: $font-size-xs;
+    color: $color-text-tertiary;
+  }
+}
+
+.roomCardTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+}
+
+.miniTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+
+  &.tagSupply {
+    background: $color-primary-bg;
+    color: $color-primary;
+  }
+
+  &.tagPhoto {
+    background: $color-warning-bg;
+    color: $color-warning;
+  }
+
+  &.tagDone {
+    background: $color-success-bg;
+    color: $color-success;
+  }
+
+  &.tagFollowup {
+    background: $color-info-bg;
+    color: $color-info;
+  }
+}
+
+.goAction {
+  font-size: $font-size-sm;
+  color: $color-warning;
+  font-weight: $font-weight-semibold;
+  text-align: right;
+  margin-top: $spacing-xs;
 }
 
 .emptyState {

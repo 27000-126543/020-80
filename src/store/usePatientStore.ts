@@ -5,6 +5,7 @@ import { mockPatients, mockPhotoRecords, mockHandoverRecords, mockSupplies } fro
 
 const STORAGE_KEY = 'dental_nurse_store_v1'
 const STORAGE_DATE_KEY = 'dental_nurse_store_date'
+const PHOTO_STORAGE_KEY = 'dental_nurse_photos_v1'
 
 const getTodayStr = () => new Date().toISOString().split('T')[0]
 
@@ -23,7 +24,6 @@ const loadFromStorage = () => {
       const parsed = JSON.parse(stored)
       console.log('[PatientStore] loaded from storage', {
         patients: parsed.patients?.length,
-        photos: parsed.photoRecords?.length,
         handovers: parsed.handoverRecords?.length
       })
       return parsed
@@ -38,7 +38,6 @@ const saveToStorage = (state: Partial<PatientState>) => {
   try {
     const toSave = {
       patients: state.patients,
-      photoRecords: state.photoRecords,
       handoverRecords: state.handoverRecords
     }
     Taro.setStorageSync(STORAGE_KEY, JSON.stringify(toSave))
@@ -48,10 +47,36 @@ const saveToStorage = (state: Partial<PatientState>) => {
   }
 }
 
+const loadPhotoStorage = (): PhotoRecord[] => {
+  try {
+    const storedDate = Taro.getStorageSync(STORAGE_DATE_KEY)
+    const today = getTodayStr()
+    if (storedDate !== today) return []
+    const stored = Taro.getStorageSync(PHOTO_STORAGE_KEY)
+    if (stored) {
+      const parsed = JSON.parse(stored)
+      console.log('[PatientStore] loaded photos from storage', parsed.length)
+      return parsed
+    }
+  } catch (e) {
+    console.error('[PatientStore] loadPhotoStorage error', e)
+  }
+  return []
+}
+
+const savePhotoStorage = (photoRecords: PhotoRecord[]) => {
+  try {
+    Taro.setStorageSync(PHOTO_STORAGE_KEY, JSON.stringify(photoRecords))
+  } catch (e) {
+    console.error('[PatientStore] savePhotoStorage error', e)
+  }
+}
+
 const initData = () => {
   const stored = loadFromStorage()
   if (stored) {
-    return stored
+    const photoRecords = loadPhotoStorage()
+    return { ...stored, photoRecords }
   }
   return {
     patients: mockPatients.map(p => ({
@@ -183,7 +208,7 @@ export const usePatientStore = create<PatientState>((set, get) => ({
       const key = `${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
       record[key] = [...record[key], photo]
       const photoRecords = records
-      saveToStorage({ ...state, photoRecords })
+      savePhotoStorage(photoRecords)
       return { photoRecords }
     })
     console.log('[PatientStore] addPhoto', { patientId, stage, photoId: photo.id })
@@ -201,7 +226,7 @@ export const usePatientStore = create<PatientState>((set, get) => ({
       .filter(r => r.date === today)
       .map(r => r.patientId)
     return patients.filter(p =>
-      (p.status === 'treating' || p.status === 'pending') &&
+      p.status === 'treating' &&
       !photoPatientIds.includes(p.id)
     )
   },

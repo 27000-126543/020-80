@@ -16,6 +16,8 @@ const angleIcons: Record<PhotoAngle, string> = {
   local: '🔍'
 }
 
+const stageKeys = ['prePhotos', 'duringPhotos', 'postPhotos'] as const
+
 const PhotoCapturePage: React.FC = () => {
   const router = useRouter()
   const patientId = router.params.patientId as string
@@ -40,16 +42,31 @@ const PhotoCapturePage: React.FC = () => {
     return stagePhotos[key]
   }, [stagePhotos, currentStage])
 
-  const getAngleCount = (angle: PhotoAngle): number => {
-    return currentPhotos.filter(p => p.angle === angle).length
+  const getAngleCount = (angle: PhotoAngle, stage?: PhotoStage): number => {
+    const s = stage || currentStage
+    const key = `${s}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
+    return stagePhotos[key].filter(p => p.angle === angle).length
   }
 
-  const getAnglePhotos = (angle: PhotoAngle): PhotoItem[] => {
-    return currentPhotos.filter(p => p.angle === angle)
+  const getStageCompletion = (stage: PhotoStage) => {
+    const key = `${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
+    const photos = stagePhotos[key]
+    const completed = angles.filter(a => photos.some(p => p.angle === a)).length
+    return { completed, total: angles.length }
+  }
+
+  const getOverallCompletion = () => {
+    let completed = 0
+    let total = 0
+    ;(['pre', 'during', 'post'] as PhotoStage[]).forEach(s => {
+      const sc = getStageCompletion(s)
+      completed += sc.completed
+      total += sc.total
+    })
+    return { completed, total }
   }
 
   const handleCapture = (angle: PhotoAngle) => {
-    console.log('[PhotoCapture] capture', { patientId, stage: currentStage, angle })
     Taro.chooseImage({
       count: 1,
       sizeType: ['compressed'],
@@ -57,19 +74,34 @@ const PhotoCapturePage: React.FC = () => {
       success: (res) => {
         const tempFilePaths = res.tempFilePaths
         if (tempFilePaths && tempFilePaths.length > 0) {
+          const tempPath = tempFilePaths[0]
           const now = new Date()
           const timeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`
-          const newPhoto: PhotoItem = {
-            id: `photo-${Date.now()}`,
-            angle,
-            url: tempFilePaths[0],
-            uploadTime: timeStr
-          }
-          addPhoto(patientId, currentStage, newPhoto)
-          Taro.showToast({
-            title: '拍摄成功',
-            icon: 'success',
-            duration: 1000
+          const fs = Taro.getFileSystemManager()
+          fs.readFile({
+            filePath: tempPath,
+            encoding: 'base64',
+            success: (readRes) => {
+              const base64Url = `data:image/jpeg;base64,${readRes.data}`
+              const newPhoto: PhotoItem = {
+                id: `photo-${Date.now()}`,
+                angle,
+                url: base64Url,
+                uploadTime: timeStr
+              }
+              addPhoto(patientId, currentStage, newPhoto)
+              Taro.showToast({ title: '拍摄成功', icon: 'success', duration: 1000 })
+            },
+            fail: () => {
+              const newPhoto: PhotoItem = {
+                id: `photo-${Date.now()}`,
+                angle,
+                url: tempPath,
+                uploadTime: timeStr
+              }
+              addPhoto(patientId, currentStage, newPhoto)
+              Taro.showToast({ title: '拍摄成功', icon: 'success', duration: 1000 })
+            }
           })
         }
       },
@@ -81,11 +113,7 @@ const PhotoCapturePage: React.FC = () => {
 
   const handlePreview = (photo: PhotoItem) => {
     const urls = currentPhotos.map(p => p.url)
-    const current = photo.url
-    Taro.previewImage({
-      urls,
-      current
-    })
+    Taro.previewImage({ urls, current: photo.url })
   }
 
   if (!patient) {
@@ -95,6 +123,8 @@ const PhotoCapturePage: React.FC = () => {
       </View>
     )
   }
+
+  const overall = getOverallCompletion()
 
   return (
     <View className={styles.page}>
@@ -106,21 +136,38 @@ const PhotoCapturePage: React.FC = () => {
           <Text className={styles.name}>{patient.name}</Text>
           <Text className={styles.meta}>{patient.room} · {patient.dentist}</Text>
         </View>
+        <View className={styles.overallBadge}>
+          <Text>{overall.completed}/{overall.total}</Text>
+        </View>
       </View>
 
-      <View className={styles.stageTabs}>
-        {(['pre', 'during', 'post'] as PhotoStage[]).map(stage => (
-          <View
-            key={stage}
-            className={classnames(styles.stageTab, styles[stage], currentStage === stage && styles.active)}
-            onClick={() => setCurrentStage(stage)}
-          >
-            <Text className={styles.stageName}>{PhotoStageMap[stage]}</Text>
-            <Text className={styles.stageCount}>
-              {stagePhotos[`${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'].length} 张
-            </Text>
-          </View>
-        ))}
+      <View className={styles.stageProgress}>
+        {(['pre', 'during', 'post'] as PhotoStage[]).map(stage => {
+          const sc = getStageCompletion(stage)
+          const isCurrent = currentStage === stage
+          return (
+            <View
+              key={stage}
+              className={classnames(
+                styles.stageTab,
+                styles[stage],
+                isCurrent && styles.active
+              )}
+              onClick={() => setCurrentStage(stage)}
+            >
+              <Text className={styles.stageName}>{PhotoStageMap[stage]}</Text>
+              <View className={styles.stageBar}>
+                <View
+                  className={classnames(styles.stageBarFill, styles[stage])}
+                  style={{ width: `${(sc.completed / sc.total) * 100}%` }}
+                />
+              </View>
+              <Text className={styles.stageCount}>
+                {sc.completed}/{sc.total} 角度
+              </Text>
+            </View>
+          )
+        })}
       </View>
 
       <View className={styles.angleGrid}>
@@ -130,20 +177,25 @@ const PhotoCapturePage: React.FC = () => {
           return (
             <View
               key={angle}
-              className={classnames(styles.angleCard, styles[currentStage], hasPhoto && styles.done)}
+              className={classnames(
+                styles.angleCard,
+                styles[currentStage],
+                hasPhoto && styles.done,
+                !hasPhoto && styles.missing
+              )}
             >
               <View className={styles.angleIcon}>
                 <Text>{angleIcons[angle]}</Text>
               </View>
               <Text className={styles.angleName}>{PhotoAngleMap[angle]}</Text>
-              <Text className={styles.angleCount}>
-                {hasPhoto ? `已拍 ${count} 张` : '未拍摄'}
+              <Text className={classnames(styles.angleCount, !hasPhoto && styles.missingText)}>
+                {hasPhoto ? `已拍 ${count} 张` : '⚠️ 未拍摄'}
               </Text>
               <View
-                className={styles.captureBtn}
+                className={classnames(styles.captureBtn, !hasPhoto && styles.captureMissing)}
                 onClick={() => handleCapture(angle)}
               >
-                <Text>📷 {hasPhoto ? '继续拍' : '拍摄'}</Text>
+                <Text>📷 {hasPhoto ? '补拍' : '拍摄'}</Text>
               </View>
             </View>
           )
@@ -177,7 +229,7 @@ const PhotoCapturePage: React.FC = () => {
       <View className={styles.bottomTip}>
         <Text className={styles.tipIcon}>💡</Text>
         <View className={styles.tipText}>
-          <Text>拍摄时请保持光线充足，镜头对准拍摄部位。照片将自动归档到该患者的就诊记录中。</Text>
+          <Text>每个阶段需拍摄正面、侧方、咬合面、局部牙位4个角度。缺少的角度标红提醒，补拍后统计自动更新。</Text>
         </View>
       </View>
     </View>

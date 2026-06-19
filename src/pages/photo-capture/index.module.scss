@@ -42,9 +42,18 @@
     color: $color-text-tertiary;
     margin-top: 4rpx;
   }
+
+  .overallBadge {
+    padding: 8rpx 20rpx;
+    border-radius: $radius-round;
+    background: $color-primary-bg;
+    color: $color-primary;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+  }
 }
 
-.stageTabs {
+.stageProgress {
   display: flex;
   background: $color-bg-card;
   padding: $spacing-sm $page-padding;
@@ -54,11 +63,10 @@
 
 .stageTab {
   flex: 1;
-  height: 80rpx;
+  padding: $spacing-sm 0;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
   border-radius: $radius-md;
   transition: all $transition-fast;
 
@@ -67,9 +75,28 @@
     font-weight: $font-weight-medium;
   }
 
+  .stageBar {
+    width: 80%;
+    height: 8rpx;
+    background: $color-bg-hover;
+    border-radius: 4rpx;
+    margin: $spacing-xs 0;
+    overflow: hidden;
+  }
+
+  .stageBarFill {
+    height: 100%;
+    border-radius: 4rpx;
+    transition: width 0.3s ease;
+
+    &.pre { background: $photo-pre; }
+    &.during { background: $photo-during; }
+    &.post { background: $photo-post; }
+  }
+
   .stageCount {
     font-size: $font-size-xs;
-    margin-top: 4rpx;
+    margin-top: 2rpx;
   }
 
   &.pre {
@@ -187,6 +214,25 @@
       background: $color-success-bg;
     }
   }
+
+  &.missing {
+    border: 2rpx solid rgba($color-error, 0.25);
+  }
+
+  .missingText {
+    color: $color-error;
+  }
+
+  .captureMissing {
+    background: $color-error !important;
+    animation: pulse 2s infinite;
+  }
+}
+
+@keyframes pulse {
+  0% { opacity: 1; }
+  50% { opacity: 0.85; }
+  100% { opacity: 1; }
 }
 
 .photoSection {
@@ -237,31 +283,6 @@
     color: #fff;
     font-size: 20rpx;
     text-align: center;
-  }
-
-  .deleteBtn {
-    position: absolute;
-    top: 8rpx;
-    right: 8rpx;
-    width: 36rpx;
-    height: 36rpx;
-    border-radius: $radius-round;
-    background: rgba(0, 0, 0, 0.5);
-    color: #fff;
-    font-size: 20rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-}
-
-.emptyPhotos {
-  padding: 48rpx;
-  text-align: center;
-
-  .emptyText {
-    font-size: $font-size-sm;
-    color: $color-text-tertiary;
   }
 }
 

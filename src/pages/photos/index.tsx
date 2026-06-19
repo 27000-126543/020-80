@@ -4,7 +4,10 @@ import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
-import type { PhotoRecord, Patient } from '@/types'
+import type { PhotoRecord, Patient, PhotoAngle, PhotoStage } from '@/types'
+import { PhotoAngleMap, PhotoStageMap } from '@/types'
+
+const requiredAngles: PhotoAngle[] = ['front', 'side', 'occlusal', 'local']
 
 const PhotosPage: React.FC = () => {
   const {
@@ -35,6 +38,33 @@ const PhotosPage: React.FC = () => {
   const getFirstThumbs = (record: PhotoRecord) => {
     const all = [...record.prePhotos, ...record.duringPhotos, ...record.postPhotos]
     return all.slice(0, 5)
+  }
+
+  const getStageAngles = (record: PhotoRecord, stage: PhotoStage) => {
+    const key = `${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
+    const photos = record[key]
+    return requiredAngles.map(angle => ({
+      angle,
+      done: photos.some(p => p.angle === angle)
+    }))
+  }
+
+  const getMissingAngles = (record: PhotoRecord) => {
+    const missing: { stage: PhotoStage; angle: PhotoAngle }[] = []
+    ;(['pre', 'during', 'post'] as PhotoStage[]).forEach(stage => {
+      const key = `${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
+      requiredAngles.forEach(angle => {
+        if (!record[key].some(p => p.angle === angle)) {
+          missing.push({ stage, angle })
+        }
+      })
+    })
+    return missing
+  }
+
+  const getAngleCompletion = (record: PhotoRecord) => {
+    const missing = getMissingAngles(record)
+    return { completed: 12 - missing.length, total: 12 }
   }
 
   const hasContent = todayRecords.length > 0 || noPhotoPatients.length > 0
@@ -111,59 +141,92 @@ const PhotosPage: React.FC = () => {
                   <Text>已拍照记录</Text>
                   <Text className={styles.sectionExtra}>{todayRecords.length}位 · {totalPhotos}张</Text>
                 </View>
-                {todayRecords.map(record => (
-                  <View
-                    key={record.id}
-                    className={styles.recordCard}
-                    onClick={() => handleGoCapture(record.patientId)}
-                  >
-                    <View className={styles.cardHeader}>
-                      <View className={styles.avatar}>
-                        <Text>{record.patientName.charAt(0)}</Text>
-                      </View>
-                      <View className={styles.info}>
-                        <Text className={styles.name}>{record.patientName}</Text>
-                        <Text className={styles.meta}>{record.room} · {record.date}</Text>
-                      </View>
-                    </View>
+                {todayRecords.map(record => {
+                  const missing = getMissingAngles(record)
+                  const completion = getAngleCompletion(record)
 
-                    <View className={styles.stageSummary}>
-                      <View className={classnames(styles.stageItem, styles.pre)}>
-                        <Text className={styles.num}>{record.prePhotos.length}</Text>
-                        <Text className={styles.label}>术前</Text>
-                      </View>
-                      <View className={classnames(styles.stageItem, styles.during)}>
-                        <Text className={styles.num}>{record.duringPhotos.length}</Text>
-                        <Text className={styles.label}>术中</Text>
-                      </View>
-                      <View className={classnames(styles.stageItem, styles.post)}>
-                        <Text className={styles.num}>{record.postPhotos.length}</Text>
-                        <Text className={styles.label}>术后</Text>
-                      </View>
-                    </View>
-
-                    {getFirstThumbs(record).length > 0 && (
-                      <View className={styles.thumbRow}>
-                        <Text className={styles.thumbLabel}>最新照片</Text>
-                        <View className={styles.thumbs}>
-                          {getFirstThumbs(record).map(photo => (
-                            <View key={photo.id} className={styles.thumb}>
-                              <Image
-                                src={photo.url}
-                                mode="aspectFill"
-                                onError={(e) => console.error('[PhotosPage] image error', e.detail)}
-                              />
-                            </View>
-                          ))}
+                  return (
+                    <View
+                      key={record.id}
+                      className={styles.recordCard}
+                      onClick={() => handleGoCapture(record.patientId)}
+                    >
+                      <View className={styles.cardHeader}>
+                        <View className={styles.avatar}>
+                          <Text>{record.patientName.charAt(0)}</Text>
+                        </View>
+                        <View className={styles.info}>
+                          <Text className={styles.name}>{record.patientName}</Text>
+                          <Text className={styles.meta}>{record.room} · {record.date}</Text>
+                        </View>
+                        <View className={classnames(
+                          styles.completionBadge,
+                          completion.completed === completion.total && styles.allDone
+                        )}>
+                          <Text>{completion.completed}/{completion.total}</Text>
                         </View>
                       </View>
-                    )}
 
-                    <View className={styles.actionBtn}>
-                      <Text>查看 / 继续拍摄</Text>
+                      <View className={styles.stageAngleMap}>
+                        {(['pre', 'during', 'post'] as PhotoStage[]).map(stage => {
+                          const stageAngles = getStageAngles(record, stage)
+                          return (
+                            <View key={stage} className={styles.stageAngleRow}>
+                              <Text className={classnames(styles.stageLabel, styles[stage])}>
+                                {PhotoStageMap[stage]}
+                              </Text>
+                              <View className={styles.angleDots}>
+                                {stageAngles.map(sa => (
+                                  <View
+                                    key={sa.angle}
+                                    className={classnames(
+                                      styles.angleDot,
+                                      sa.done ? styles.dotDone : styles.dotMissing
+                                    )}
+                                  >
+                                    <Text>{PhotoAngleMap[sa.angle].slice(0, 1)}</Text>
+                                  </View>
+                                ))}
+                              </View>
+                            </View>
+                          )
+                        })}
+                      </View>
+
+                      {missing.length > 0 && (
+                        <View className={styles.missingBar}>
+                          <Text className={styles.missingText}>
+                            ⚠️ 缺少 {missing.slice(0, 4).map(m =>
+                              `${PhotoStageMap[m.stage]}·${PhotoAngleMap[m.angle]}`
+                            ).join('、')}{missing.length > 4 ? `等${missing.length}项` : ''}
+                          </Text>
+                          <Text className={styles.missingAction}>去补拍 ›</Text>
+                        </View>
+                      )}
+
+                      {getFirstThumbs(record).length > 0 && (
+                        <View className={styles.thumbRow}>
+                          <Text className={styles.thumbLabel}>最新照片</Text>
+                          <View className={styles.thumbs}>
+                            {getFirstThumbs(record).map(photo => (
+                              <View key={photo.id} className={styles.thumb}>
+                                <Image
+                                  src={photo.url}
+                                  mode="aspectFill"
+                                  onError={(e) => console.error('[PhotosPage] image error', e.detail)}
+                                />
+                              </View>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+
+                      <View className={styles.actionBtn}>
+                        <Text>查看 / 补拍</Text>
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  )
+                })}
               </View>
             )}
           </View>

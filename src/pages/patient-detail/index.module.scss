@@ -345,3 +345,171 @@
     background: linear-gradient(135deg, $color-info 0%, #4080ff 100%);
   }
 }
+
+.timelineSection {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+}
+
+.timelineHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-md;
+}
+
+.timelineTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+}
+
+.timelineProgress {
+  font-size: $font-size-sm;
+  color: $color-primary;
+  font-weight: $font-weight-semibold;
+}
+
+.incompleteAlert {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+  padding: $spacing-sm $spacing-md;
+  background: $color-warning-bg;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-md;
+
+  .alertIcon {
+    font-size: 28rpx;
+    flex-shrink: 0;
+  }
+
+  .alertContent {
+    flex: 1;
+    font-size: $font-size-sm;
+    color: $color-warning;
+    line-height: 1.4;
+  }
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timelineItem {
+  display: flex;
+  min-height: 120rpx;
+}
+
+.timelineLeft {
+  width: 64rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.timelineDot {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  z-index: 1;
+
+  .dotIcon {
+    font-size: 22rpx;
+  }
+
+  &.dotDone {
+    background: $color-success;
+    color: #fff;
+  }
+
+  &.dotPending {
+    background: $color-bg-hover;
+    color: $color-text-tertiary;
+    border: 2rpx solid $color-border;
+  }
+}
+
+.timelineLine {
+  width: 4rpx;
+  flex: 1;
+  min-height: 32rpx;
+  background: $color-border;
+
+  &.lineDone {
+    background: $color-success;
+  }
+}
+
+.timelineRight {
+  flex: 1;
+  padding-left: $spacing-sm;
+  padding-bottom: $spacing-md;
+}
+
+.timelineCard {
+  background: $color-bg-hover;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+}
+
+.timelineCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6rpx;
+}
+
+.timelineStepTitle {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+
+  &.stepDone {
+    color: $color-success;
+  }
+}
+
+.timelineAction {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  background: $color-primary;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+
+  &:active {
+    opacity: 0.9;
+  }
+}
+
+.timelineSubtitle {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  line-height: 1.4;
+}
+
+.missingTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: $spacing-xs;
+  margin-top: $spacing-sm;
+}
+
+.missingTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-xs;
+  background: $color-error-bg;
+  color: $color-error;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-medium;
+}

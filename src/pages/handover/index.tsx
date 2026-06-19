@@ -4,23 +4,37 @@ import Taro from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
-import { StatusMap, HandoverRecord } from '@/types'
+import { StatusMap, HandoverRecord, PhotoAngle, PhotoStage } from '@/types'
+import { PhotoAngleMap, PhotoStageMap } from '@/types'
 
-type TabType = 'pending' | 'done'
+type TabType = 'pending' | 'done' | 'summary'
+
+const requiredAngles: PhotoAngle[] = ['front', 'side', 'occlusal', 'local']
 
 const getSupplySummary = (record: HandoverRecord, max = 3) => {
   const checked = record.supplies.filter(s => s.checked)
   if (checked.length === 0) return ''
   const names = checked.slice(0, max).map(s => s.name)
-  if (checked.length > max) {
-    names.push(`+${checked.length - max}`)
-  }
+  if (checked.length > max) names.push(`+${checked.length - max}`)
   return names.join('、')
+}
+
+const getPhotoCompletion = (record: HandoverRecord, photoRecords: any[]) => {
+  const photoRecord = photoRecords.find((r: any) => r.patientId === record.patientId)
+  if (!photoRecord) return { completed: 0, total: 12 }
+  let completed = 0
+  ;(['pre', 'during', 'post'] as PhotoStage[]).forEach(stage => {
+    const key = `${stage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'
+    requiredAngles.forEach(angle => {
+      if (photoRecord[key].some((p: any) => p.angle === angle)) completed++
+    })
+  })
+  return { completed, total: 12 }
 }
 
 const HandoverPage: React.FC = () => {
   const [tab, setTab] = useState<TabType>('pending')
-  const { patients, getPendingHandoverPatients, getTodayDoneRecords } = usePatientStore()
+  const { patients, getPendingHandoverPatients, getTodayDoneRecords, photoRecords } = usePatientStore()
 
   const pendingPatients = useMemo(() => getPendingHandoverPatients(), [getPendingHandoverPatients])
 
@@ -34,6 +48,20 @@ const HandoverPage: React.FC = () => {
     done: doneRecords.length
   }), [pendingPatients.length, doneRecords.length])
 
+  const summaryByRoom = useMemo(() => {
+    const rooms: Record<string, { archived: any[]; unarchived: any[] }> = {}
+    patients.forEach(p => {
+      if (!rooms[p.room]) rooms[p.room] = { archived: [], unarchived: [] }
+      const handover = doneRecords.find(r => r.patientId === p.id)
+      if (handover) {
+        rooms[p.room].archived.push({ patient: p, record: handover })
+      } else if (p.status === 'treating' || p.status === 'done') {
+        rooms[p.room].unarchived.push(p)
+      }
+    })
+    return rooms
+  }, [patients, doneRecords])
+
   const handleGoDetail = (patientId: string) => {
     Taro.navigateTo({
       url: `/pages/handover-detail/index?patientId=${patientId}`
@@ -43,9 +71,7 @@ const HandoverPage: React.FC = () => {
   const formatCompletedTime = (iso: string) => {
     if (!iso) return ''
     const t = iso.split('T')
-    if (t.length === 2) {
-      return `${t[0].slice(5)} ${t[1].slice(0, 5)}`
-    }
+    if (t.length === 2) return `${t[0].slice(5)} ${t[1].slice(0, 5)}`
     if (iso.includes(' ')) {
       const [d, time] = iso.split(' ')
       return `${d.slice(5)} ${time.slice(0, 5)}`
@@ -55,6 +81,15 @@ const HandoverPage: React.FC = () => {
       return `${today} ${iso}`
     }
     return iso.slice(0, 16)
+  }
+
+  const formatFollowUp = (date?: string) => {
+    if (!date) return ''
+    const parts = date.split(' ')
+    if (parts.length === 2) {
+      return `${parts[0].slice(5)} ${parts[1].slice(0, 5)}`
+    }
+    return date
   }
 
   return (
@@ -89,6 +124,12 @@ const HandoverPage: React.FC = () => {
           onClick={() => setTab('done')}
         >
           <Text>已完成 ({stats.done})</Text>
+        </View>
+        <View
+          className={classnames(styles.tabItem, tab === 'summary' && styles.active)}
+          onClick={() => setTab('summary')}
+        >
+          <Text>归档总览</Text>
         </View>
       </View>
 
@@ -126,7 +167,7 @@ const HandoverPage: React.FC = () => {
               </View>
             ))
           )
-        ) : (
+        ) : tab === 'done' ? (
           doneRecords.length === 0 ? (
             <View className={styles.emptyState}>
               <Text className={styles.emptyIcon}>📋</Text>
@@ -136,6 +177,7 @@ const HandoverPage: React.FC = () => {
             doneRecords.map(record => {
               const supplyCount = record.supplies.filter(s => s.checked).length
               const supplySummary = getSupplySummary(record)
+              const photoCompletion = getPhotoCompletion(record, photoRecords)
 
               return (
                 <View
@@ -156,36 +198,72 @@ const HandoverPage: React.FC = () => {
                     <Text className={styles.time}>{formatCompletedTime(record.completedAt)}</Text>
                   </View>
 
-                  <View className={styles.doneInfoGrid}>
-                    <View className={styles.infoItem}>
-                      <Text className={styles.infoLabel}>📦 耗材</Text>
-                      <Text className={styles.infoValue}>
-                        {supplyCount > 0 ? `${supplyCount}项 · ${supplySummary}` : '无'}
-                      </Text>
+                  <View className={styles.summaryCard}>
+                    <View className={styles.summaryRow}>
+                      <Text className={styles.summaryIcon}>📦</Text>
+                      <View className={styles.summaryContent}>
+                        <Text className={styles.summaryLabel}>耗材</Text>
+                        <Text className={styles.summaryValue}>
+                          {supplyCount > 0 ? `${supplyCount}项 · ${supplySummary}` : '无'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    <View className={styles.summaryRow}>
+                      <Text className={styles.summaryIcon}>💡</Text>
+                      <View className={styles.summaryContent}>
+                        <Text className={styles.summaryLabel}>注意事项</Text>
+                        <Text className={styles.summaryValue}>
+                          {record.postOpInstructions ? '已告知 ✓' : '未确认'}
+                        </Text>
+                      </View>
                     </View>
 
                     {record.followUpDate && (
-                      <View className={styles.infoItem}>
-                        <Text className={styles.infoLabel}>📅 复诊时间</Text>
-                        <Text className={classnames(styles.infoValue, styles.highlight)}>
-                          {record.followUpDate}
-                        </Text>
+                      <View className={styles.summaryRow}>
+                        <Text className={styles.summaryIcon}>📅</Text>
+                        <View className={styles.summaryContent}>
+                          <Text className={styles.summaryLabel}>复诊时间</Text>
+                          <Text className={classnames(styles.summaryValue, styles.highlight)}>
+                            {formatFollowUp(record.followUpDate)}
+                          </Text>
+                        </View>
                       </View>
                     )}
 
-                    {record.postOpInstructions && (
-                      <View className={styles.infoItem}>
-                        <Text className={styles.infoLabel}>💡 术后注意事项</Text>
-                        <Text className={styles.infoValue}>已告知 ✓</Text>
+                    <View className={styles.summaryRow}>
+                      <Text className={styles.summaryIcon}>📷</Text>
+                      <View className={styles.summaryContent}>
+                        <Text className={styles.summaryLabel}>照片完成度</Text>
+                        <View className={styles.photoCompletion}>
+                          <View className={styles.completionTrack}>
+                            <View
+                              className={classnames(
+                                styles.completionFill,
+                                photoCompletion.completed === photoCompletion.total && styles.allDone
+                              )}
+                              style={{ width: `${(photoCompletion.completed / photoCompletion.total) * 100}%` }}
+                            />
+                          </View>
+                          <Text className={classnames(
+                            styles.completionText,
+                            photoCompletion.completed === photoCompletion.total && styles.allDoneText
+                          )}>
+                            {photoCompletion.completed}/{photoCompletion.total}
+                          </Text>
+                        </View>
                       </View>
-                    )}
+                    </View>
 
                     {record.notes && (
-                      <View className={styles.infoItem}>
-                        <Text className={styles.infoLabel}>📝 备注</Text>
-                        <Text className={classnames(styles.infoValue, styles.notes)}>
-                          {record.notes}
-                        </Text>
+                      <View className={styles.summaryRow}>
+                        <Text className={styles.summaryIcon}>📝</Text>
+                        <View className={styles.summaryContent}>
+                          <Text className={styles.summaryLabel}>备注</Text>
+                          <Text className={classnames(styles.summaryValue, styles.notes)}>
+                            {record.notes}
+                          </Text>
+                        </View>
                       </View>
                     )}
                   </View>
@@ -197,6 +275,84 @@ const HandoverPage: React.FC = () => {
                 </View>
               )
             })
+          )
+        ) : (
+          Object.keys(summaryByRoom).length === 0 ? (
+            <View className={styles.emptyState}>
+              <Text className={styles.emptyIcon}>📊</Text>
+              <Text className={styles.emptyText}>暂无归档数据</Text>
+            </View>
+          ) : (
+            Object.entries(summaryByRoom).map(([room, data]) => (
+              <View key={room} className={styles.roomSection}>
+                <View className={styles.roomHeader}>
+                  <Text className={styles.roomName}>{room}</Text>
+                  <Text className={styles.roomStats}>
+                    {data.archived.length}已归档 · {data.unarchived.length}未归档
+                  </Text>
+                </View>
+
+                {data.archived.length > 0 && (
+                  <View className={styles.archivedSection}>
+                    <Text className={styles.subSectionTitle}>✅ 已归档</Text>
+                    {data.archived.map(({ patient, record }: any) => {
+                      const photoC = getPhotoCompletion(record, photoRecords)
+                      const supplyN = record.supplies.filter((s: any) => s.checked).length
+                      return (
+                        <View
+                          key={patient.id}
+                          className={styles.roomCard}
+                          onClick={() => handleGoDetail(patient.id)}
+                        >
+                          <View className={styles.roomCardHeader}>
+                            <Text className={styles.roomCardName}>{patient.name}</Text>
+                            <Text className={styles.roomCardMeta}>
+                              {patient.dentist} · {formatCompletedTime(record.completedAt)}
+                            </Text>
+                          </View>
+                          <View className={styles.roomCardTags}>
+                            <Text className={classnames(styles.miniTag, styles.tagSupply)}>
+                              � {supplyN}项
+                            </Text>
+                            <Text className={classnames(styles.miniTag, styles.tagPhoto, photoC.completed === photoC.total && styles.tagDone)}>
+                              📷 {photoC.completed}/{photoC.total}
+                            </Text>
+                            {record.followUpDate && (
+                              <Text className={classnames(styles.miniTag, styles.tagFollowup)}>
+                                📅 {formatFollowUp(record.followUpDate)}
+                              </Text>
+                            )}
+                          </View>
+                        </View>
+                      )
+                    })}
+                  </View>
+                )}
+
+                {data.unarchived.length > 0 && (
+                  <View className={styles.unarchivedSection}>
+                    <Text className={styles.subSectionTitle}>⚠️ 未归档</Text>
+                    {data.unarchived.map((patient: any) => (
+                      <View
+                        key={patient.id}
+                        className={classnames(styles.roomCard, styles.unarchivedCard)}
+                        onClick={() => handleGoDetail(patient.id)}
+                      >
+                        <View className={styles.roomCardHeader}>
+                          <Text className={styles.roomCardName}>{patient.name}</Text>
+                          <Text className={styles.roomCardMeta}>
+                            {patient.dentist} · {StatusMap[patient.status]}
+                          </Text>
+                        </View>
+                        <View className={styles.goAction}>
+                          <Text>去完成归档 ›</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            ))
           )
         )}
       </ScrollView>
