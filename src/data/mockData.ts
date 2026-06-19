@@ -1,4 +1,5 @@
 import type { Patient, PhotoRecord, HandoverRecord, SupplyItem } from '@/types'
+import dayjs from 'dayjs'
 
 export const mockPatients: Patient[] = [
   {
@@ -144,7 +145,7 @@ export const mockPhotoRecords: PhotoRecord[] = [
     patientId: 'p004',
     patientName: '刘强',
     room: '2号诊室',
-    date: '2024-06-20',
+    date: new Date().toISOString().split('T')[0],
     prePhotos: [
       { id: 'ph001-1', angle: 'front', url: `${photoBase}201/400/300`, uploadTime: '09:35' },
       { id: 'ph001-2', angle: 'side', url: `${photoBase}202/400/300`, uploadTime: '09:36' },
@@ -163,7 +164,7 @@ export const mockPhotoRecords: PhotoRecord[] = [
     patientId: 'p005',
     patientName: '陈静',
     room: '2号诊室',
-    date: '2024-06-20',
+    date: new Date().toISOString().split('T')[0],
     prePhotos: [
       { id: 'ph002-1', angle: 'front', url: `${photoBase}101/400/300`, uploadTime: '11:05' }
     ],
@@ -190,7 +191,7 @@ export const mockHandoverRecords: HandoverRecord[] = [
     ],
     postOpInstructions: true,
     followUpAppointment: true,
-    followUpDate: `${new Date().toISOString().split('T')[0].slice(0, 8)}${(parseInt(new Date().toISOString().split('T')[0].slice(8, 10)) + 7).toString().padStart(2, '0')} 09:30`,
+    followUpDate: `${dayjs().add(7, 'day').format('YYYY-MM-DD')} 09:30`,
     notes: '24小时内勿用患侧咀嚼',
     completedAt: `${new Date().toISOString().split('T')[0]}T10:30`,
     nurse: '张护士'

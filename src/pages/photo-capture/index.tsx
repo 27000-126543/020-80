@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { View, Text, Image } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
@@ -24,18 +24,24 @@ const PhotoCapturePage: React.FC = () => {
   const { getPatientById, getPhotoRecordByPatientId, addPhoto } = usePatientStore()
 
   const [currentStage, setCurrentStage] = useState<PhotoStage>('pre')
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useDidShow(() => {
+    setRefreshKey(k => k + 1)
+  })
 
   const patient = getPatientById(patientId)
   const photoRecord = getPhotoRecordByPatientId(patientId)
 
   const stagePhotos = useMemo(() => {
+    void refreshKey
     if (!photoRecord) return { prePhotos: [], duringPhotos: [], postPhotos: [] }
     return {
       prePhotos: photoRecord.prePhotos,
       duringPhotos: photoRecord.duringPhotos,
       postPhotos: photoRecord.postPhotos
     }
-  }, [photoRecord])
+  }, [photoRecord, refreshKey])
 
   const currentPhotos = useMemo(() => {
     const key = `${currentStage}Photos` as 'prePhotos' | 'duringPhotos' | 'postPhotos'

@@ -5,7 +5,8 @@ export default defineAppConfig({
     'pages/handover/index',
     'pages/patient-detail/index',
     'pages/photo-capture/index',
-    'pages/handover-detail/index'
+    'pages/handover-detail/index',
+    'pages/archive-preview/index'
   ],
   window: {
     backgroundTextStyle: 'light',

@@ -265,6 +265,11 @@
     font-weight: $font-weight-semibold;
   }
 
+  .missingHighlight {
+    color: $color-warning;
+    font-weight: $font-weight-semibold;
+  }
+
   .notes {
     color: $color-text-secondary;
   }
@@ -323,7 +328,7 @@
   }
 }
 
-.roomSection {
+.qcRoomSection {
   margin: $spacing-md $page-padding;
   background: $color-bg-card;
   border-radius: $radius-lg;
@@ -331,110 +336,184 @@
   overflow: hidden;
 }
 
-.roomHeader {
+.qcRoomHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: $spacing-lg $spacing-lg $spacing-sm;
 
-  .roomName {
+  .qcRoomLeft {
+    display: flex;
+    align-items: center;
+    gap: $spacing-sm;
+  }
+
+  .qcRoomName {
     font-size: $font-size-lg;
     font-weight: $font-weight-semibold;
     color: $color-text-primary;
   }
 
-  .roomStats {
+  .qcRoomCount {
     font-size: $font-size-sm;
     color: $color-text-tertiary;
   }
 }
 
-.subSectionTitle {
-  display: block;
-  font-size: $font-size-sm;
+.qcOverdueTag {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  background: $color-error-bg;
+  color: $color-error;
+  font-size: $font-size-xs;
   font-weight: $font-weight-semibold;
-  color: $color-text-secondary;
-  padding: $spacing-sm $spacing-lg;
 }
 
-.archivedSection,
-.unarchivedSection {
-  padding-bottom: $spacing-sm;
+.qcWarningTag {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  background: $color-warning-bg;
+  color: $color-warning;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
 }
 
-.roomCard {
+.qcPatientCard {
   margin: 0 $spacing-md $spacing-sm;
   padding: $spacing-md;
   background: $color-bg-hover;
   border-radius: $radius-md;
+  border-left: 6rpx solid $color-warning;
   transition: all $transition-fast;
+
+  &.qcOverdue {
+    border-left-color: $color-error;
+    background: $color-error-bg;
+  }
+
+  &.qcWarning {
+    border-left-color: $color-warning;
+  }
+}
+
+.qcPatientHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: $spacing-sm;
+}
+
+.qcPatientLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-sm;
+}
+
+.qcAvatar {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: $radius-round;
+  background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $color-text-white;
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
+}
+
+.qcPatientName {
+  font-size: $font-size-md;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  display: block;
+}
+
+.qcPatientMeta {
+  font-size: $font-size-xs;
+  color: $color-text-tertiary;
+  display: block;
+  margin-top: 2rpx;
+}
+
+.qcTimeTag {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-round;
+  background: $color-error-bg;
+  color: $color-error;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.qcTimeTagWarn {
+  padding: 4rpx 12rpx;
+  border-radius: $radius-round;
+  background: $color-warning-bg;
+  color: $color-warning;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+}
+
+.qcMissingList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-xs;
+}
+
+.qcMissingItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-xs $spacing-sm;
+  border-radius: $radius-sm;
+  background: $color-bg-card;
+
+  &.qcMissingPhoto {
+    border-left: 4rpx solid $color-info;
+  }
+
+  &.qcMissingHandover {
+    border-left: 4rpx solid $color-warning;
+  }
+
+  &.qcMissingFollowup {
+    border-left: 4rpx solid $color-primary;
+  }
+}
+
+.qcMissingLeft {
+  display: flex;
+  align-items: center;
+  gap: $spacing-xs;
+  flex: 1;
+  min-width: 0;
+}
+
+.qcMissingIcon {
+  font-size: 24rpx;
+  flex-shrink: 0;
+}
+
+.qcMissingLabel {
+  font-size: $font-size-sm;
+  color: $color-text-secondary;
+  line-height: 1.4;
+}
+
+.qcFixBtn {
+  padding: 4rpx 16rpx;
+  border-radius: $radius-round;
+  background: $color-primary;
+  color: $color-text-white;
+  font-size: $font-size-xs;
+  font-weight: $font-weight-semibold;
+  flex-shrink: 0;
+  white-space: nowrap;
 
   &:active {
     opacity: 0.9;
   }
-
-  &.unarchivedCard {
-    border-left: 6rpx solid $color-warning;
-  }
-}
-
-.roomCardHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: $spacing-xs;
-
-  .roomCardName {
-    font-size: $font-size-md;
-    font-weight: $font-weight-semibold;
-    color: $color-text-primary;
-  }
-
-  .roomCardMeta {
-    font-size: $font-size-xs;
-    color: $color-text-tertiary;
-  }
-}
-
-.roomCardTags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: $spacing-xs;
-}
-
-.miniTag {
-  padding: 4rpx 12rpx;
-  border-radius: $radius-xs;
-  font-size: $font-size-xs;
-  font-weight: $font-weight-medium;
-
-  &.tagSupply {
-    background: $color-primary-bg;
-    color: $color-primary;
-  }
-
-  &.tagPhoto {
-    background: $color-warning-bg;
-    color: $color-warning;
-  }
-
-  &.tagDone {
-    background: $color-success-bg;
-    color: $color-success;
-  }
-
-  &.tagFollowup {
-    background: $color-info-bg;
-    color: $color-info;
-  }
-}
-
-.goAction {
-  font-size: $font-size-sm;
-  color: $color-warning;
-  font-weight: $font-weight-semibold;
-  text-align: right;
-  margin-top: $spacing-xs;
 }
 
 .emptyState {

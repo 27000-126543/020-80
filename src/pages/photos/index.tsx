@@ -1,23 +1,33 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { View, Text, ScrollView, Image } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import { usePatientStore } from '@/store/usePatientStore'
-import type { PhotoRecord, Patient, PhotoAngle, PhotoStage } from '@/types'
+import type { PhotoRecord, Patient, PhotoAngle, PhotoStage, PhotoItem } from '@/types'
 import { PhotoAngleMap, PhotoStageMap } from '@/types'
 
 const requiredAngles: PhotoAngle[] = ['front', 'side', 'occlusal', 'local']
 
 const PhotosPage: React.FC = () => {
-  const {
-    getTodayPhotoRecords,
-    getTodayTreatingPatientsWithoutPhotos,
-    patients
-  } = usePatientStore()
+  const store = usePatientStore()
+  const { patients } = store
 
-  const todayRecords = useMemo(() => getTodayPhotoRecords(), [getTodayPhotoRecords])
-  const noPhotoPatients = useMemo(() => getTodayTreatingPatientsWithoutPhotos(), [getTodayTreatingPatientsWithoutPhotos])
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useDidShow(() => {
+    setRefreshKey(k => k + 1)
+  })
+
+  const todayRecords = useMemo(() => {
+    void refreshKey
+    return store.getTodayPhotoRecords()
+  }, [refreshKey, store])
+
+  const noPhotoPatients = useMemo(() => {
+    void refreshKey
+    return store.getTodayTreatingPatientsWithoutPhotos()
+  }, [refreshKey, store])
 
   const totalPhotos = useMemo(() => {
     return todayRecords.reduce((sum, r) =>
@@ -35,9 +45,10 @@ const PhotosPage: React.FC = () => {
     })
   }
 
-  const getFirstThumbs = (record: PhotoRecord) => {
-    const all = [...record.prePhotos, ...record.duringPhotos, ...record.postPhotos]
-    return all.slice(0, 5)
+  const handlePreviewPackage = (patientId: string) => {
+    Taro.navigateTo({
+      url: `/pages/archive-preview/index?patientId=${patientId}`
+    })
   }
 
   const getStageAngles = (record: PhotoRecord, stage: PhotoStage) => {
@@ -45,7 +56,8 @@ const PhotosPage: React.FC = () => {
     const photos = record[key]
     return requiredAngles.map(angle => ({
       angle,
-      done: photos.some(p => p.angle === angle)
+      done: photos.some(p => p.angle === angle),
+      photo: photos.find(p => p.angle === angle)
     }))
   }
 
@@ -149,7 +161,6 @@ const PhotosPage: React.FC = () => {
                     <View
                       key={record.id}
                       className={styles.recordCard}
-                      onClick={() => handleGoCapture(record.patientId)}
                     >
                       <View className={styles.cardHeader}>
                         <View className={styles.avatar}>
@@ -194,7 +205,7 @@ const PhotosPage: React.FC = () => {
                       </View>
 
                       {missing.length > 0 && (
-                        <View className={styles.missingBar}>
+                        <View className={styles.missingBar} onClick={() => handleGoCapture(record.patientId)}>
                           <Text className={styles.missingText}>
                             ⚠️ 缺少 {missing.slice(0, 4).map(m =>
                               `${PhotoStageMap[m.stage]}·${PhotoAngleMap[m.angle]}`
@@ -221,8 +232,19 @@ const PhotosPage: React.FC = () => {
                         </View>
                       )}
 
-                      <View className={styles.actionBtn}>
-                        <Text>查看 / 补拍</Text>
+                      <View className={styles.actionRow}>
+                        <View
+                          className={classnames(styles.actionBtn, styles.captureBtn)}
+                          onClick={() => handleGoCapture(record.patientId)}
+                        >
+                          <Text>📷 补拍</Text>
+                        </View>
+                        <View
+                          className={classnames(styles.actionBtn, styles.previewBtn)}
+                          onClick={() => handlePreviewPackage(record.patientId)}
+                        >
+                          <Text>📋 归档预览</Text>
+                        </View>
                       </View>
                     </View>
                   )
@@ -234,6 +256,11 @@ const PhotosPage: React.FC = () => {
       </ScrollView>
     </View>
   )
+}
+
+const getFirstThumbs = (record: PhotoRecord) => {
+  const all = [...record.prePhotos, ...record.duringPhotos, ...record.postPhotos]
+  return all.slice(0, 5)
 }
 
 export default PhotosPage

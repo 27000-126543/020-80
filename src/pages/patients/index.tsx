@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react'
 import { View, Text, ScrollView } from '@tarojs/components'
-import Taro from '@tarojs/taro'
+import Taro, { useDidShow } from '@tarojs/taro'
 import dayjs from 'dayjs'
 import classnames from 'classnames'
 import styles from './index.module.scss'
@@ -20,9 +20,17 @@ const filterLabels: Record<FilterType, string> = {
 
 const PatientsPage: React.FC = () => {
   const [filter, setFilter] = useState<FilterType>('all')
+  const [refreshKey, setRefreshKey] = useState(0)
   const { getPatientsByRoom, patients } = usePatientStore()
 
-  const patientsByRoom = useMemo(() => getPatientsByRoom(), [getPatientsByRoom])
+  useDidShow(() => {
+    setRefreshKey(k => k + 1)
+  })
+
+  const patientsByRoom = useMemo(() => {
+    void refreshKey
+    return getPatientsByRoom()
+  }, [getPatientsByRoom, refreshKey])
 
   const filteredRooms = useMemo(() => {
     if (filter === 'all') return patientsByRoom

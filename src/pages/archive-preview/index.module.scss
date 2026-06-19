@@ -1,0 +1,270 @@
+@use '@/styles/variables.scss' as *;
+
+.page {
+  min-height: 100vh;
+  background: $color-bg-page;
+  padding-bottom: 40rpx;
+}
+
+.patientBar {
+  display: flex;
+  align-items: center;
+  padding: $spacing-md $page-padding;
+  background: $color-bg-card;
+  border-bottom: 1rpx solid $color-divider;
+
+  .avatar {
+    width: 72rpx;
+    height: 72rpx;
+    border-radius: $radius-round;
+    background: linear-gradient(135deg, $color-primary 0%, $color-primary-light 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $color-text-white;
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    margin-right: $spacing-md;
+    flex-shrink: 0;
+  }
+
+  .info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .name {
+    font-size: $font-size-lg;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+    display: block;
+  }
+
+  .meta {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    display: block;
+    margin-top: 4rpx;
+  }
+
+  .statusBadge {
+    padding: 6rpx 20rpx;
+    border-radius: $radius-round;
+    font-size: $font-size-sm;
+    font-weight: $font-weight-semibold;
+    flex-shrink: 0;
+
+    &.complete {
+      background: $color-success-bg;
+      color: $color-success;
+    }
+
+    &.incomplete {
+      background: $color-warning-bg;
+      color: $color-warning;
+    }
+  }
+}
+
+.completionBar {
+  margin: $spacing-md $page-padding;
+  padding: $spacing-md $spacing-lg;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+
+  .completionHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-sm;
+  }
+
+  .completionLabel {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+    color: $color-text-primary;
+  }
+
+  .completionValue {
+    font-size: $font-size-sm;
+    color: $color-warning;
+    font-weight: $font-weight-medium;
+
+    &.allDone {
+      color: $color-success;
+    }
+  }
+
+  .completionTrack {
+    width: 100%;
+    height: 16rpx;
+    background: $color-bg-hover;
+    border-radius: 8rpx;
+    overflow: hidden;
+  }
+
+  .completionFill {
+    height: 100%;
+    background: $color-warning;
+    border-radius: 8rpx;
+    transition: width 0.3s ease;
+
+    &.allDoneFill {
+      background: $color-success;
+    }
+  }
+}
+
+.stageSection {
+  margin: 0 $page-padding $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+}
+
+.stageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-md $spacing-lg $spacing-sm;
+
+  .stageName {
+    font-size: $font-size-md;
+    font-weight: $font-weight-semibold;
+
+    &.pre { color: $photo-pre; }
+    &.during { color: $photo-during; }
+    &.post { color: $photo-post; }
+  }
+
+  .stageCount {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+  }
+}
+
+.photoGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-sm;
+  padding: 0 $spacing-md $spacing-md;
+}
+
+.photoCell {
+  border-radius: $radius-md;
+  overflow: hidden;
+  position: relative;
+  background: $color-bg-hover;
+  aspect-ratio: 4 / 3;
+
+  image {
+    width: 100%;
+    height: 100%;
+  }
+
+  &.hasPhoto {
+    &:active {
+      opacity: 0.9;
+    }
+  }
+
+  &.noPhoto {
+    border: 2rpx dashed $color-border;
+  }
+}
+
+.emptyCell {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  .emptyIcon {
+    font-size: 40rpx;
+    margin-bottom: $spacing-xs;
+    opacity: 0.4;
+  }
+
+  .emptyLabel {
+    font-size: $font-size-sm;
+    color: $color-text-tertiary;
+    margin-bottom: 4rpx;
+  }
+
+  .emptyHint {
+    font-size: $font-size-xs;
+    color: $color-text-disabled;
+  }
+}
+
+.photoLabel {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 8rpx;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: $font-size-xs;
+  text-align: center;
+}
+
+.infoSection {
+  margin: 0 $page-padding $spacing-md;
+  background: $color-bg-card;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+}
+
+.infoTitle {
+  font-size: $font-size-lg;
+  font-weight: $font-weight-semibold;
+  color: $color-text-primary;
+  margin-bottom: $spacing-md;
+}
+
+.infoList {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-sm;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: $spacing-xs 0;
+
+  &:not(:last-child) {
+    border-bottom: 1rpx solid rgba(0, 0, 0, 0.04);
+    padding-bottom: $spacing-sm;
+  }
+}
+
+.infoLabel {
+  font-size: $font-size-sm;
+  color: $color-text-tertiary;
+  flex-shrink: 0;
+}
+
+.infoValue {
+  font-size: $font-size-sm;
+  color: $color-text-primary;
+  text-align: right;
+  max-width: 420rpx;
+  line-height: 1.4;
+
+  &.doneValue {
+    color: $color-success;
+  }
+
+  &.pendingValue {
+    color: $color-warning;
+    font-weight: $font-weight-medium;
+  }
+}

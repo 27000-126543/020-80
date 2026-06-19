@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { View, Text, Image } from '@tarojs/components'
-import Taro, { useRouter } from '@tarojs/taro'
+import Taro, { useRouter, useDidShow } from '@tarojs/taro'
 import classnames from 'classnames'
 import styles from './index.module.scss'
 import StatusBadge from '@/components/StatusBadge'
@@ -32,11 +32,16 @@ const PatientDetailPage: React.FC = () => {
     getHandoverByPatientId
   } = usePatientStore()
   const [patient, setPatient] = useState(getPatientById(patientId))
+  const [refreshKey, setRefreshKey] = useState(0)
+
+  useDidShow(() => {
+    setRefreshKey(k => k + 1)
+  })
 
   useEffect(() => {
     const p = getPatientById(patientId)
     setPatient(p)
-  }, [patientId, getPatientById])
+  }, [patientId, getPatientById, refreshKey])
 
   const photoRecord = getPhotoRecordByPatientId(patientId)
   const handoverRecord = getHandoverByPatientId(patientId)
@@ -189,22 +194,25 @@ const PatientDetailPage: React.FC = () => {
         ? `已完成，护士 ${handoverRecord.nurse}`
         : handoverRecord ? '交接中，未完成' : '未开始',
       done: handoverDone,
-      action: !handoverDone && isTreating ? '去交接' : undefined,
+      action: !handoverDone && (isTreating || isDone) ? '去交接' : undefined,
       actionUrl: `/pages/handover-detail/index?patientId=${patientId}`
     })
 
-    if (handoverDone && handoverRecord.followUpDate) {
-      steps.push({
-        key: 'followup',
-        icon: '📅',
-        title: '复诊安排',
-        subtitle: `已预约 ${handoverRecord.followUpDate}`,
-        done: true
-      })
-    }
+    const followUpDone = !!handoverRecord?.followUpDate
+    steps.push({
+      key: 'followup',
+      icon: '📅',
+      title: '复诊安排',
+      subtitle: followUpDone
+        ? `已预约 ${handoverRecord.followUpDate}`
+        : '待补齐',
+      done: followUpDone,
+      action: !followUpDone && (isTreating || isDone) ? '去预约' : undefined,
+      actionUrl: `/pages/handover-detail/index?patientId=${patientId}`
+    })
 
     return steps
-  }, [patient, photoRecord, handoverRecord, allChecked, checkedCount, checklist])
+  }, [patient, photoRecord, handoverRecord, allChecked, checkedCount, checklist, refreshKey])
 
   const completedSteps = timeline.filter(s => s.done).length
   const incompleteItems = timeline.filter(s => !s.done && s.missing && s.missing.length > 0)

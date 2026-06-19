@@ -67,6 +67,7 @@ const loadPhotoStorage = (): PhotoRecord[] => {
 const savePhotoStorage = (photoRecords: PhotoRecord[]) => {
   try {
     Taro.setStorageSync(PHOTO_STORAGE_KEY, JSON.stringify(photoRecords))
+    Taro.setStorageSync(STORAGE_DATE_KEY, getTodayStr())
   } catch (e) {
     console.error('[PatientStore] savePhotoStorage error', e)
   }
